@@ -44,7 +44,7 @@ export async function init(configFile: string, force: boolean): Promise<void> {
     const num = await ask("First allowed number (blank to skip): ");
     if (num) {
       const label = await ask("Label (optional): ");
-      config = store.addAllowlist(config, num, label || undefined);
+      config = store.addAllowlist(config, num, { label: label || undefined });
     }
   } finally {
     ask.close();
@@ -62,7 +62,7 @@ export function allowlist(configFile: string, sub: string | undefined, number: s
   }
   if (sub === "add") {
     if (!number) throw new Error("usage: agent-chat allowlist add <number> [--label <name>]");
-    store.writeConfig(configFile, store.addAllowlist(requireConfig(configFile), number, label));
+    store.writeConfig(configFile, store.addAllowlist(requireConfig(configFile), number, { label }));
     console.log(`✅ added ${store.normalizeNumber(number)}${label ? ` (${label})` : ""}`);
     return;
   }

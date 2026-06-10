@@ -5,7 +5,7 @@ import { join } from "node:path";
 import {
   createDefault, generateToken, normalizeNumber, readConfig, writeConfig,
 } from "../../src/cli/config-store.js";
-import { addAllowlist, removeAllowlist, listAllowlist } from "../../src/cli/config-store.js";
+import { addAllowlist, removeAllowlist, listAllowlist, setDefaultLanguage } from "../../src/cli/config-store.js";
 import { setPort, rotateToken } from "../../src/cli/config-store.js";
 
 const tmpFile = () => join(mkdtempSync(join(tmpdir(), "agentchat-")), "config.json");
@@ -17,11 +17,12 @@ describe("config-store core", () => {
     expect(t).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
-  it("createDefault is schema-valid with a token and default port", () => {
+  it("createDefault is schema-valid with token, port, and default language", () => {
     const c = createDefault();
     expect(c.bridgePort).toBe(7766);
     expect(c.bridgeToken).toBeTruthy();
     expect(c.allowlist).toEqual([]);
+    expect(c.defaultLanguage).toBe("English");
   });
 
   it("writes (mode 600) and reads back round-trip", () => {
@@ -54,19 +55,26 @@ describe("config-store core", () => {
 
 describe("config-store allowlist", () => {
   it("adds a labeled entry, normalizing the number", () => {
-    const c = addAllowlist(createDefault(), "+52 1 55 1234 5678", "Mom");
+    const c = addAllowlist(createDefault(), "+52 1 55 1234 5678", { label: "Mom" });
     expect(c.allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
   });
 
-  it("adds a bare entry when no label", () => {
+  it("adds a bare entry when only a number (all defaults)", () => {
     const c = addAllowlist(createDefault(), "5215512345678");
     expect(c.allowlist).toEqual(["5215512345678"]);
   });
 
-  it("dedupes by normalized number, updating the label", () => {
-    let c = addAllowlist(createDefault(), "5215512345678");
-    c = addAllowlist(c, "+52 155 1234 5678", "Mom");
-    expect(c.allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
+  it("writes an object when confirm:false or a language is set", () => {
+    expect(addAllowlist(createDefault(), "5215512345678", { confirm: false }).allowlist)
+      .toEqual([{ number: "5215512345678", confirm: false }]);
+    expect(addAllowlist(createDefault(), "5215512345678", { language: "Spanish" }).allowlist)
+      .toEqual([{ number: "5215512345678", language: "Spanish" }]);
+  });
+
+  it("upsert merges: unspecified fields are preserved", () => {
+    let c = addAllowlist(createDefault(), "5215512345678", { label: "Mom", confirm: false });
+    c = addAllowlist(c, "+52 155 1234 5678", { language: "Spanish" });
+    expect(c.allowlist).toEqual([{ number: "5215512345678", label: "Mom", confirm: false, language: "Spanish" }]);
   });
 
   it("rejects a number with no digits", () => {
@@ -74,24 +82,31 @@ describe("config-store allowlist", () => {
   });
 
   it("removes by normalized number", () => {
-    let c = addAllowlist(createDefault(), "5215512345678", "Mom");
+    let c = addAllowlist(createDefault(), "5215512345678", { label: "Mom" });
     c = removeAllowlist(c, "+52 1 55 1234 5678");
     expect(c.allowlist).toEqual([]);
   });
 
-  it("lists entries with optional labels", () => {
-    let c = addAllowlist(createDefault(), "5215512345678", "Mom");
-    c = addAllowlist(c, "120363000000000000");
+  it("lists entries with confirm and optional fields", () => {
+    let c = addAllowlist(createDefault(), "5215512345678", { label: "Mom", language: "Spanish" });
+    c = addAllowlist(c, "120363000000000000", { confirm: false });
     expect(listAllowlist(c)).toEqual([
-      { number: "5215512345678", label: "Mom" },
-      { number: "120363000000000000" },
+      { number: "5215512345678", label: "Mom", confirm: true, language: "Spanish" },
+      { number: "120363000000000000", confirm: false },
     ]);
   });
 
-  it("labels survive a write/read round-trip", () => {
+  it("attributes survive a write/read round-trip", () => {
     const file = tmpFile();
-    writeConfig(file, addAllowlist(createDefault(), "5215512345678", "Mom"));
-    expect(readConfig(file).allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
+    writeConfig(file, addAllowlist(createDefault(), "5215512345678", { label: "Mom", confirm: false, language: "Spanish" }));
+    expect(readConfig(file).allowlist).toEqual([
+      { number: "5215512345678", label: "Mom", confirm: false, language: "Spanish" },
+    ]);
+  });
+
+  it("setDefaultLanguage updates the global default; rejects empty", () => {
+    expect(setDefaultLanguage(createDefault(), "Spanish").defaultLanguage).toBe("Spanish");
+    expect(() => setDefaultLanguage(createDefault(), "   ")).toThrow(/language/i);
   });
 });
 
