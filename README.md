@@ -96,8 +96,9 @@ npm run cli -- install claude-code     # runs `claude mcp add` under the hood
 npm run cli -- uninstall claude-code   # to remove it
 ```
 
-`agent-chat install` with no argument lists the supported agents. Other scopes:
-`--scope project` (a `.mcp.json` in the current directory) or `--scope local`.
+`agent-chat install` with no argument lists the supported agents. Scope defaults
+to `--scope user`; the alternatives are `--scope project` (a `.mcp.json` in the
+current directory) or `--scope local`.
 
 Requirements: the `claude` CLI must be on your `PATH`, and this repo must stay in
 place (the server is registered to run from here, with `AGENT_CHAT_HOME` pointing
