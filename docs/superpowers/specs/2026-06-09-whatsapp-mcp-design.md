@@ -51,15 +51,19 @@ AI client ──stdio──► MCP server ──HTTP(127.0.0.1 + bearer token)�
 
 - **Bridge daemon** (`src/bridge/`)
   - Owns the single live Baileys socket.
-  - Handles linking (QR / pairing code) and persists creds via
+  - Handles linking: prints the QR to its own terminal (`qrcode-terminal`).
+    A pairing-code fallback for headless hosts is triggered by setting the
+    `AGENT_CHAT_PAIRING_NUMBER` env var. Persists creds via
     `useMultiFileAuthState('data/auth')`.
   - Auto-reconnects on drop; reconnects unless the disconnect reason is
     `loggedOut`.
   - Writes every incoming message, contact update, and downloaded media to
     SQLite.
-  - Exposes a **localhost-only HTTP API** (`/send`, `/send-media`, `/status`,
-    `/qr`) guarded by a bearer token. Only this process can send, because only it
-    holds the socket.
+  - Exposes a **localhost-only HTTP API** (`/send`, `/send-media`,
+    `/download-media`, `/status`) guarded by a bearer token. Only this process
+    can send, because only it holds the socket. The QR is **not** served over
+    HTTP — it is a linking credential and is only printed to the bridge's
+    terminal; the unauthenticated `/status` returns only the connection state.
 
 - **MCP server** (`src/mcp/`)
   - stdio MCP server spawned by the AI client.
@@ -73,7 +77,7 @@ AI client ──stdio──► MCP server ──HTTP(127.0.0.1 + bearer token)�
 
 ## Data model (SQLite via better-sqlite3)
 
-- `chats(jid TEXT PK, name TEXT, is_group INTEGER, last_ts INTEGER, unread_count INTEGER)`
+- `chats(jid TEXT PK, name TEXT, is_group INTEGER, last_ts INTEGER, unread_count INTEGER)` — `unread_count` exists in the schema but is **not surfaced** by `list_chats`; the live-receive path (`seen_by_llm` + `get_new_messages`) covers "what's new" without needing reliable unread accounting across history sync.
 - `messages(id TEXT PK, chat_jid TEXT, sender_jid TEXT, from_me INTEGER, ts INTEGER, type TEXT, text TEXT, media_path TEXT, raw_json TEXT, seen_by_llm INTEGER DEFAULT 0)`
 - `contacts(jid TEXT PK, push_name TEXT, name TEXT, phone TEXT)`
 - `messages_fts` — FTS5 virtual table over `messages.text` for fast search,
@@ -111,8 +115,8 @@ don't block each other).
 ## Key flows
 
 ### Linking (first run)
-1. Bridge starts with no saved creds → generates a QR, prints it in the terminal
-   (`qrcode-terminal`) and serves it at `GET /qr`.
+1. Bridge starts with no saved creds → generates a QR and prints it in its own
+   terminal (`qrcode-terminal`). The QR is never served over HTTP.
 2. User scans via phone: WhatsApp → Linked Devices → Link a device.
 3. Creds persist to `data/auth/`; subsequent starts reconnect silently.
 4. Pairing-code path (`sock.requestPairingCode(number)`) is offered as a fallback
@@ -216,7 +220,8 @@ Although the full scope is approved, implementation will proceed in dependency
 order so each phase is independently verifiable:
 
 1. **Foundation:** repo, schema/migrations, config, store layer (+ tests).
-2. **Bridge:** Baileys connection, linking, ingest to SQLite, `/status` + `/qr`.
+2. **Bridge:** Baileys connection, linking (terminal QR + pairing fallback),
+   ingest to SQLite, `/status`.
 3. **MCP read tools:** `list_chats`, `get_messages`, `search_messages`,
    `list_contacts`, `get_new_messages`, `whatsapp_status`.
 4. **Send path:** bridge `/send` + `/send-media`, allowlist, draft/confirm tools.
