@@ -104,7 +104,7 @@ written only when the user sets them via the CLI.
   ]);
   ```
 - Add `defaultLanguage: z.string().min(1).default("English")` to the schema.
-- `AppConfig` (in `src/cli/types.ts`) changes:
+- `AppConfig` (in `src/shared/types.ts`) changes:
   - `allowlist: AllowEntry[]` where
     `AllowEntry = { number: string; label?: string; confirm: boolean; language?: string }`.
   - add `defaultLanguage: string`.
@@ -247,7 +247,7 @@ rejected and the draft flow works).
 ```
 src/shared/config.ts        # object-preserving allowlist schema + defaultLanguage   (modified)
 src/shared/allowlist.ts     # findPolicy / isAllowed(AllowEntry[]) / resolveLanguage  (modified)
-src/cli/types.ts            # AllowEntry, AppConfig.allowlist/defaultLanguage         (modified)
+src/shared/types.ts         # AllowEntry, AppConfig.allowlist/defaultLanguage         (modified)
 src/mcp/tools.ts            # sendMessage one-shot; draft + contacts enrichment       (modified)
 src/mcp/server.ts           # register send_message                                  (modified)
 src/mcp/index.ts            # pass allowlist objects + defaultLanguage to ToolCore    (modified)
