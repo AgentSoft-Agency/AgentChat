@@ -59,7 +59,7 @@ Most TDD effort targets `shared/*` (pure logic). `bridge/whatsapp.ts`, `bridge/a
 
 ```json
 {
-  "name": "whatsapp-mcp",
+  "name": "@agentsoft/agent-chat",
   "version": "0.1.0",
   "private": true,
   "type": "module",
