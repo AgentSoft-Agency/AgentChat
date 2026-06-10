@@ -20,7 +20,9 @@ export function preflight(p: Paths): { linked: boolean } {
 export async function runInstall(agentId: string, scope: Scope): Promise<void> {
   const agent = getAgent(agentId);
   const root = repoRoot();
-  const { linked } = preflight(paths());
+  // Validate the SAME data dir the installed server will read (via AGENT_CHAT_HOME=root),
+  // not the cwd — so install works regardless of where it's invoked from.
+  const { linked } = preflight(paths(join(root, "data")));
   await agent.install({ repoRoot: root, scope });
   console.log(`\n✅ registered the agent-chat MCP server with ${agent.label} (${scope} scope).`);
   console.log("   Restart Claude Code to pick it up.");
