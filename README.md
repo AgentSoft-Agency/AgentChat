@@ -119,6 +119,30 @@ These require a real phone and a test number on your allowlist:
 6. Send an image from the phone; call `download_media` with its message id;
    confirm the returned path exists and opens.
 
+## Commits & releases
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+`<type>(<scope>): <subject>` — e.g. `feat(cli): add install command`,
+`fix(bridge): resolve recipient JID`. Common types: `feat`, `fix`, `docs`,
+`refactor`, `test`, `chore`, `build`, `ci`.
+
+Git hooks (installed automatically on `npm install` via husky) enforce this:
+
+- **commit-msg** runs commitlint to validate the message format.
+- **pre-commit** runs `npm run typecheck && npm test`.
+
+Bypass the hooks in an emergency with `git commit --no-verify`.
+
+Cutting a release bumps the version from commit history, regenerates
+`CHANGELOG.md`, commits `chore(release): x.y.z`, and tags it. It does **not**
+push or publish:
+
+```bash
+npm run release                      # subsequent releases
+npm run release -- --first-release   # only the very first time (no version bump)
+git push --follow-tags origin release
+```
+
 ## Development
 
 ```bash
