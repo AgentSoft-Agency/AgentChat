@@ -1,0 +1,8 @@
+{
+  "allowlist": [
+    { "number": "5215512345678", "label": "Mom" },
+    { "number": "120363012345678901", "label": "Family group" }
+  ],
+  "bridgeToken": "change-me-to-a-long-random-string",
+  "bridgePort": 7766
+}

@@ -1,5 +1,6 @@
 node_modules/
-data/
+data/*
+!data/config.example.json
 dist/
 *.log
 .env
