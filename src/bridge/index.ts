@@ -11,6 +11,7 @@ import { Store } from "../shared/store.js";
 import { ingestMessagesUpsert, ingestContactsUpsert } from "./ingest.js";
 import { startWhatsApp } from "./whatsapp.js";
 import { createBridgeApi } from "./api.js";
+import { resolveSendJid } from "./resolve.js";
 
 const p = paths();
 const config = loadConfig(p.configFile);
@@ -47,7 +48,8 @@ async function saveMediaFor(id: string): Promise<void> {
 const api = createBridgeApi({
   token: config.bridgeToken,
   sendText: async (jid, text) => {
-    const r = await handle.sock().sendMessage(jid, { text });
+    const target = await resolveSendJid(handle.sock(), jid);
+    const r = await handle.sock().sendMessage(target, { text });
     return r?.key?.id ?? "";
   },
   sendMedia: async (jid, filePath, caption) => {
@@ -61,7 +63,8 @@ const api = createBridgeApi({
     else if (isAudio) content = { audio: { url: filePath }, mimetype: ext === "ogg" || ext === "opus" ? "audio/ogg; codecs=opus" : "audio/mpeg" };
     else if (isVideo) content = { video: { url: filePath }, caption };
     else content = { document: { url: filePath }, mimetype: "application/octet-stream", fileName, caption };
-    const r = await handle.sock().sendMessage(jid, content);
+    const target = await resolveSendJid(handle.sock(), jid);
+    const r = await handle.sock().sendMessage(target, content);
     return r?.key?.id ?? "";
   },
   status: () => ({ state: handle.status(), qr: handle.lastQr() }),
