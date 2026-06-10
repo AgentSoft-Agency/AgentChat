@@ -8,7 +8,7 @@ export interface Paths {
   configFile: string;
 }
 
-export function paths(dataDir = resolve(process.cwd(), "data")): Paths {
+export function paths(dataDir = defaultDataDir()): Paths {
   return {
     dataDir,
     dbFile: join(dataDir, "whatsapp.db"),
@@ -16,4 +16,9 @@ export function paths(dataDir = resolve(process.cwd(), "data")): Paths {
     mediaDir: join(dataDir, "media"),
     configFile: join(dataDir, "config.json"),
   };
+}
+
+function defaultDataDir(): string {
+  const home = process.env.AGENT_CHAT_HOME;
+  return home ? join(home, "data") : resolve(process.cwd(), "data");
 }

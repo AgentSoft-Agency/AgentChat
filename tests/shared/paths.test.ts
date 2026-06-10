@@ -10,4 +10,28 @@ describe("paths", () => {
     expect(p.mediaDir).toBe("/tmp/wa/media");
     expect(p.configFile).toBe("/tmp/wa/config.json");
   });
+
+  it("uses AGENT_CHAT_HOME/data when the env var is set", () => {
+    const prev = process.env.AGENT_CHAT_HOME;
+    process.env.AGENT_CHAT_HOME = "/opt/agent-chat";
+    try {
+      const p = paths();
+      expect(p.dataDir).toBe("/opt/agent-chat/data");
+      expect(p.configFile).toBe("/opt/agent-chat/data/config.json");
+    } finally {
+      if (prev === undefined) delete process.env.AGENT_CHAT_HOME;
+      else process.env.AGENT_CHAT_HOME = prev;
+    }
+  });
+
+  it("an explicit dataDir argument overrides AGENT_CHAT_HOME", () => {
+    const prev = process.env.AGENT_CHAT_HOME;
+    process.env.AGENT_CHAT_HOME = "/opt/agent-chat";
+    try {
+      expect(paths("/tmp/x").dataDir).toBe("/tmp/x");
+    } finally {
+      if (prev === undefined) delete process.env.AGENT_CHAT_HOME;
+      else process.env.AGENT_CHAT_HOME = prev;
+    }
+  });
 });
