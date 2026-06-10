@@ -64,14 +64,18 @@ export class Store {
   }
 
   takeUnseen(limit: number): Message[] {
-    const rows = this.db.prepare(
+    const select = this.db.prepare(
       `SELECT * FROM messages WHERE seen_by_llm=0 AND from_me=0 ORDER BY ts ASC LIMIT ?`
-    ).all(limit);
-    const msgs = rows.map(rowToMessage);
+    );
     const mark = this.db.prepare(`UPDATE messages SET seen_by_llm=1 WHERE id=?`);
-    const tx = this.db.transaction((ids: string[]) => ids.forEach((id) => mark.run(id)));
-    tx(msgs.map((m) => m.id));
-    return msgs;
+    // Select + mark in one transaction so a concurrent reader on the shared
+    // WAL db can't return the same unseen rows twice.
+    const tx = this.db.transaction((n: number): Message[] => {
+      const msgs = select.all(n).map(rowToMessage);
+      for (const m of msgs) mark.run(m.id);
+      return msgs;
+    });
+    return tx(limit);
   }
 
   upsertContact(c: Contact): void {
