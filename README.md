@@ -86,6 +86,23 @@ and `draft_media` → `send_draft`. Sending is deliberately two-step: a draft to
 returns a `draftId` and a preview without sending; `send_draft` then performs the
 send and re-checks the allowlist.
 
+## Use it from Claude Code
+
+Register the MCP server with Claude Code (user scope) straight from the CLI:
+
+```bash
+npm run cli -- install claude-code     # runs `claude mcp add` under the hood
+# restart Claude Code — the WhatsApp tools are now available
+npm run cli -- uninstall claude-code   # to remove it
+```
+
+`agent-chat install` with no argument lists the supported agents. Other scopes:
+`--scope project` (a `.mcp.json` in the current directory) or `--scope local`.
+
+Requirements: the `claude` CLI must be on your `PATH`, and this repo must stay in
+place (the server is registered to run from here, with `AGENT_CHAT_HOME` pointing
+at it so it finds your `data/`). Run `agent-chat init` (and `link`) first.
+
 ## Verifying it works (manual end-to-end)
 
 These require a real phone and a test number on your allowlist:
