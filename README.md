@@ -36,9 +36,10 @@ npm run cli -- init      # generates the bridge token, sets the port, optional f
 than editing the file by hand:
 
 ```bash
-npm run cli -- allowlist add <number> [--label <name>]
+npm run cli -- allowlist add <number> [--label <name>] [--confirm|--no-confirm] [--lang <language>]
 npm run cli -- allowlist remove <number>
 npm run cli -- allowlist list
+npm run cli -- default-language "<language>"   # global default (default: English)
 npm run cli -- token rotate          # then restart the bridge + MCP client
 npm run cli -- port <number>
 npm run cli -- show                  # token redacted
@@ -81,10 +82,20 @@ After `npm link`, the same commands are available as `agent-chat <command>`.
 Read (always allowed): `list_chats`, `get_messages`, `search_messages`,
 `list_contacts`, `get_new_messages`, `whatsapp_status`, `download_media`.
 
-Send (numeric allowlist + two-phase confirm): `draft_message` → `send_draft`,
-and `draft_media` → `send_draft`. Sending is deliberately two-step: a draft tool
-returns a `draftId` and a preview without sending; `send_draft` then performs the
-send and re-checks the allowlist.
+Send (numeric allowlist + per-number policy):
+
+- **`send_message`** — one-shot text send. The server permits it **only** for
+  numbers configured `confirm: false`; a `confirm: true` number is rejected and
+  must use the two-phase flow below.
+- **`draft_message` / `draft_media` → `send_draft`** — two-phase: a draft tool
+  returns a `draftId` and a preview (with `requiresConfirmation` and the
+  recipient's resolved `language`) without sending; `send_draft` performs the
+  send and re-checks the allowlist.
+
+Each allowlisted number carries `confirm` (default `true`) and an optional
+`language`, set with `allowlist add <number> [--confirm|--no-confirm] [--lang <language>]`
+(see Setup); `list_contacts` reports both for allowlisted contacts. A global
+`defaultLanguage` (default `English`) is used when a number has no `language`.
 
 ## Use it from Claude Code
 
