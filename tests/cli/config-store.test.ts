@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   createDefault, generateToken, readConfig, writeConfig,
 } from "../../src/cli/config-store.js";
+import { addAllowlist, removeAllowlist, listAllowlist } from "../../src/cli/config-store.js";
 
 const tmpFile = () => join(mkdtempSync(join(tmpdir(), "agentchat-")), "config.json");
 
@@ -35,5 +36,48 @@ describe("config-store core", () => {
     // bridgeToken missing → invalid
     writeFileSync(file, '{"allowlist":[],"bridgePort":7766}');
     expect(() => readConfig(file)).toThrow();
+  });
+});
+
+describe("config-store allowlist", () => {
+  it("adds a labeled entry, normalizing the number", () => {
+    const c = addAllowlist(createDefault(), "+52 1 55 1234 5678", "Mom");
+    expect(c.allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
+  });
+
+  it("adds a bare entry when no label", () => {
+    const c = addAllowlist(createDefault(), "5215512345678");
+    expect(c.allowlist).toEqual(["5215512345678"]);
+  });
+
+  it("dedupes by normalized number, updating the label", () => {
+    let c = addAllowlist(createDefault(), "5215512345678");
+    c = addAllowlist(c, "+52 155 1234 5678", "Mom");
+    expect(c.allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
+  });
+
+  it("rejects a number with no digits", () => {
+    expect(() => addAllowlist(createDefault(), "mom")).toThrow(/valid number/i);
+  });
+
+  it("removes by normalized number", () => {
+    let c = addAllowlist(createDefault(), "5215512345678", "Mom");
+    c = removeAllowlist(c, "+52 1 55 1234 5678");
+    expect(c.allowlist).toEqual([]);
+  });
+
+  it("lists entries with optional labels", () => {
+    let c = addAllowlist(createDefault(), "5215512345678", "Mom");
+    c = addAllowlist(c, "120363000000000000");
+    expect(listAllowlist(c)).toEqual([
+      { number: "5215512345678", label: "Mom" },
+      { number: "120363000000000000" },
+    ]);
+  });
+
+  it("labels survive a write/read round-trip", () => {
+    const file = tmpFile();
+    writeConfig(file, addAllowlist(createDefault(), "5215512345678", "Mom"));
+    expect(readConfig(file).allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
   });
 });

@@ -42,5 +42,21 @@ export function writeConfig(file: string, config: RawConfig): void {
   chmodSync(file, 0o600);
 }
 
-// entryNumber is used by the allowlist mutators added in Task 2.
-void entryNumber;
+export function addAllowlist(config: RawConfig, number: string, label?: string): RawConfig {
+  const num = normalizeNumber(number);
+  if (!num) throw new Error(`not a valid number: ${number}`);
+  const allowlist = config.allowlist.filter((e) => entryNumber(e) !== num);
+  allowlist.push(label ? { number: num, label } : num);
+  return { ...config, allowlist };
+}
+
+export function removeAllowlist(config: RawConfig, number: string): RawConfig {
+  const num = normalizeNumber(number);
+  return { ...config, allowlist: config.allowlist.filter((e) => entryNumber(e) !== num) };
+}
+
+export function listAllowlist(config: RawConfig): { number: string; label?: string }[] {
+  return config.allowlist.map((e) =>
+    typeof e === "string" ? { number: e } : { number: e.number, label: e.label }
+  );
+}
