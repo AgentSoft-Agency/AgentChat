@@ -1,4 +1,4 @@
-import { downloadMediaMessage, type WAMessage, type WASocket } from "@whiskeysockets/baileys";
+import { downloadMediaMessage, type AnyMessageContent, type WAMessage, type WASocket } from "@whiskeysockets/baileys";
 import type { ILogger } from "@whiskeysockets/baileys/lib/Utils/logger.js";
 import { writeFile } from "node:fs/promises";
 import { mkdirSync } from "node:fs";
@@ -25,7 +25,7 @@ const handle = await startWhatsApp(p.authDir, (sock: WASocket) => {
       if (g?.id) store.upsertChatName(g.id, g.subject ?? null, true);
     }
   });
-});
+}, process.env.AGENT_CHAT_PAIRING_NUMBER);
 
 const mediaLogger = pino({ level: "warn" }) as unknown as ILogger;
 
@@ -51,7 +51,17 @@ const api = createBridgeApi({
     return r?.key?.id ?? "";
   },
   sendMedia: async (jid, filePath, caption) => {
-    const r = await handle.sock().sendMessage(jid, { document: { url: filePath }, mimetype: "application/octet-stream", caption, fileName: filePath.split("/").pop() });
+    const ext = (filePath.split(".").pop() ?? "").toLowerCase();
+    const fileName = filePath.split("/").pop();
+    const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+    const isAudio = ["mp3", "ogg", "m4a", "opus", "aac", "wav"].includes(ext);
+    const isVideo = ["mp4", "mov", "mkv", "webm", "3gp"].includes(ext);
+    let content: AnyMessageContent;
+    if (isImage) content = { image: { url: filePath }, caption };
+    else if (isAudio) content = { audio: { url: filePath }, mimetype: ext === "ogg" || ext === "opus" ? "audio/ogg; codecs=opus" : "audio/mpeg" };
+    else if (isVideo) content = { video: { url: filePath }, caption };
+    else content = { document: { url: filePath }, mimetype: "application/octet-stream", fileName, caption };
+    const r = await handle.sock().sendMessage(jid, content);
     return r?.key?.id ?? "";
   },
   status: () => ({ state: handle.status(), qr: handle.lastQr() }),

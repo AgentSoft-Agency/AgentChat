@@ -21,6 +21,7 @@ describe("bridge api", () => {
       token: "secret",
       sendText: async (jid, text) => { sent.push({ jid, text }); return "id1"; },
       sendMedia: async () => "id2",
+      downloadMedia: async () => "/x",
       status: () => ({ state: "connected", qr: null }),
     }).listen(0);
     const port = (server.address() as any).port;
@@ -35,11 +36,26 @@ describe("bridge api", () => {
       token: "secret",
       sendText: async (jid, text) => { sent.push({ jid, text }); return "id1"; },
       sendMedia: async () => "id2",
+      downloadMedia: async () => "/x",
       status: () => ({ state: "connected", qr: null }),
     }).listen(0);
     const port = (server.address() as any).port;
     const r = await call(port, "/send", { to: "1@s.whatsapp.net", text: "hi" }, "secret");
     expect(r.status).toBe(200);
     expect(sent).toEqual([{ jid: "1@s.whatsapp.net", text: "hi" }]);
+  });
+
+  it("downloads media when authorized", async () => {
+    server = createBridgeApi({
+      token: "secret",
+      sendText: async () => "i",
+      sendMedia: async () => "i",
+      downloadMedia: async (id: string) => `/data/media/${id}`,
+      status: () => ({ state: "connected" }),
+    }).listen(0);
+    const port = (server.address() as any).port;
+    const r = await call(port, "/download-media", { messageId: "m1" }, "secret");
+    expect(r.status).toBe(200);
+    expect(r.json.path).toBe("/data/media/m1");
   });
 });
