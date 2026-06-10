@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "agent-chat": "src/cli/index.ts" },
+  "bin": {
+    "agent-chat": "src/cli/index.ts"
+  },
   "scripts": {
     "start:bridge": "tsx src/bridge/index.ts",
     "start:mcp": "tsx src/mcp/index.ts",
@@ -21,9 +23,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.2",
     "@types/qrcode-terminal": "^0.12.2",
+    "commit-and-tag-version": "^12.7.3",
+    "husky": "^9.1.7",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
