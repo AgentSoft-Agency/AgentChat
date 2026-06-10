@@ -1,0 +1,43 @@
+export interface Chat {
+  jid: string;
+  name: string | null;
+  isGroup: boolean;
+  lastTs: number | null;
+  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  chatJid: string;
+  senderJid: string | null;
+  fromMe: boolean;
+  ts: number;
+  type: "text" | "image" | "document" | "audio" | "video" | "other";
+  text: string | null;
+  mediaPath: string | null;
+  rawJson: string;
+  seenByLlm: boolean;
+}
+
+export interface Contact {
+  jid: string;
+  pushName: string | null;
+  name: string | null;
+  phone: string | null;
+}
+
+export interface AppConfig {
+  allowlist: string[]; // strictly numeric: contact phone digits or group numeric id
+  bridgeToken: string;
+  bridgePort: number;
+}
+
+export interface Draft {
+  id: string;
+  toJid: string;
+  kind: "text" | "media";
+  text?: string;
+  filePath?: string;
+  caption?: string;
+  createdAt: number;
+}
