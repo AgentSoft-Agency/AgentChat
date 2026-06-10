@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import type { AppConfig } from "./types.js";
 
-// A number, after stripping non-digits, must be non-empty digits.
 const numericString = z
   .string()
   .transform((s) => s.replace(/[^0-9]/g, ""))
@@ -10,15 +9,21 @@ const numericString = z
     message: "allowlist entries must be numeric (phone digits or group id)",
   });
 
-// An entry is either a bare numeric string or { number, label? }; both
-// normalize to the numeric string. The label is for readability only.
+// A bare numeric string OR { number, label?, confirm?, language? }.
+// Both normalize to an AllowEntry; confirm defaults to true.
 const allowlistEntry = z.union([
-  numericString,
-  z.object({ number: numericString, label: z.string().optional() }).transform((e) => e.number),
+  numericString.transform((number) => ({ number, confirm: true })),
+  z.object({
+    number: numericString,
+    label: z.string().optional(),
+    confirm: z.boolean().default(true),
+    language: z.string().min(1).optional(),
+  }),
 ]);
 
 const schema = z.object({
   allowlist: z.array(allowlistEntry).default([]),
+  defaultLanguage: z.string().min(1).default("English"),
   bridgeToken: z.string().min(1),
   bridgePort: z.number().int().positive().default(7766),
 });

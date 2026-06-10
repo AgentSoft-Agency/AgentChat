@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveRecipient, isAllowed } from "../../src/shared/allowlist.js";
+import { resolveRecipient, isAllowed, findPolicy, resolveLanguage } from "../../src/shared/allowlist.js";
 
 describe("allowlist", () => {
   it("resolves a plain number to a contact jid", () => {
@@ -16,5 +16,15 @@ describe("allowlist", () => {
   });
   it("rejects a recipient not on the list", () => {
     expect(isAllowed(["5215512345678"], "5219999999999@s.whatsapp.net")).toBe(false);
+  });
+  it("findPolicy returns the entry for an allowlisted jid", () => {
+    const list = [{ number: "5215512345678", label: "Mom", confirm: false, language: "Spanish" }];
+    expect(findPolicy(list, "5215512345678@s.whatsapp.net")).toEqual(list[0]);
+    expect(findPolicy(list, "5219999999999@s.whatsapp.net")).toBeUndefined();
+  });
+  it("resolveLanguage prefers the entry language, else the default", () => {
+    expect(resolveLanguage({ number: "1", confirm: true, language: "Spanish" }, "English")).toBe("Spanish");
+    expect(resolveLanguage({ number: "1", confirm: true }, "English")).toBe("English");
+    expect(resolveLanguage(undefined, "English")).toBe("English");
   });
 });

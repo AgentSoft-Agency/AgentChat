@@ -25,8 +25,16 @@ export interface Contact {
   phone: string | null;
 }
 
+export interface AllowEntry {
+  number: string;
+  label?: string;
+  confirm: boolean;
+  language?: string;
+}
+
 export interface AppConfig {
-  allowlist: string[]; // strictly numeric: contact phone digits or group numeric id
+  allowlist: AllowEntry[];
+  defaultLanguage: string;
   bridgeToken: string;
   bridgePort: number;
 }
