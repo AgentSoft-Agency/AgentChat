@@ -12,8 +12,9 @@ Usage:
   agent-chat init [--force]                       create data/config.json
   agent-chat link [--pair <number>]               link your WhatsApp account
   agent-chat allowlist list
-  agent-chat allowlist add <number> [--label <name>]
+  agent-chat allowlist add <number> [--label <name>] [--confirm|--no-confirm] [--lang <language>]
   agent-chat allowlist remove <number>
+  agent-chat default-language "<language>"        set the global default language
   agent-chat token rotate                         generate a new bridge token
   agent-chat port <number>                        set the bridge port
   agent-chat install [<agent>] [--scope user|project|local]   register the MCP into an agent
@@ -41,9 +42,25 @@ async function main(): Promise<void> {
     }
     case "allowlist": {
       const { values, positionals } = parseArgs({
-        args: rest.slice(1), options: { label: { type: "string" } }, allowPositionals: true,
+        args: rest.slice(1),
+        options: {
+          label: { type: "string" },
+          confirm: { type: "boolean" },
+          "no-confirm": { type: "boolean" },
+          lang: { type: "string" },
+        },
+        allowPositionals: true,
       });
-      cmd.allowlist(p.configFile, rest[0], positionals[0], values.label);
+      if (values.confirm && values["no-confirm"]) {
+        throw new Error("use either --confirm or --no-confirm, not both");
+      }
+      const confirm = values.confirm ? true : values["no-confirm"] ? false : undefined;
+      cmd.allowlist(p.configFile, rest[0], positionals[0], { label: values.label, confirm, language: values.lang });
+      break;
+    }
+    case "default-language": {
+      if (!rest[0]) throw new Error('usage: agent-chat default-language "<language>"');
+      cmd.defaultLanguage(p.configFile, rest[0]);
       break;
     }
     case "token": {

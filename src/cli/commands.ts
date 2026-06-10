@@ -53,17 +53,26 @@ export async function init(configFile: string, force: boolean): Promise<void> {
   console.log(`\n✅ wrote ${configFile} (token generated, mode 600). Next: agent-chat link`);
 }
 
-export function allowlist(configFile: string, sub: string | undefined, number: string | undefined, label: string | undefined): void {
+export function allowlist(
+  configFile: string,
+  sub: string | undefined,
+  number: string | undefined,
+  opts: store.AllowOpts = {}
+): void {
   if (sub === "list") {
     const entries = store.listAllowlist(requireConfig(configFile));
     if (entries.length === 0) { console.log("(no entries)"); return; }
-    for (const e of entries) console.log(`${e.number}${e.label ? `  ${e.label}` : ""}`);
+    for (const e of entries) console.log(formatEntry(e));
     return;
   }
   if (sub === "add") {
-    if (!number) throw new Error("usage: agent-chat allowlist add <number> [--label <name>]");
-    store.writeConfig(configFile, store.addAllowlist(requireConfig(configFile), number, { label }));
-    console.log(`✅ added ${store.normalizeNumber(number)}${label ? ` (${label})` : ""}`);
+    if (!number) throw new Error("usage: agent-chat allowlist add <number> [--label <name>] [--confirm|--no-confirm] [--lang <language>]");
+    store.writeConfig(configFile, store.addAllowlist(requireConfig(configFile), number, opts));
+    const tags = [
+      opts.confirm === false ? "no-confirm" : opts.confirm === true ? "confirm" : null,
+      opts.language ? `lang:${opts.language}` : null,
+    ].filter(Boolean).join(", ");
+    console.log(`✅ added ${store.normalizeNumber(number)}${opts.label ? ` (${opts.label})` : ""}${tags ? ` [${tags}]` : ""}`);
     return;
   }
   if (sub === "remove") {
@@ -73,6 +82,19 @@ export function allowlist(configFile: string, sub: string | undefined, number: s
     return;
   }
   throw new Error("usage: agent-chat allowlist <list|add|remove> ...");
+}
+
+function formatEntry(e: { number: string; label?: string; confirm: boolean; language?: string }): string {
+  const parts = [e.number];
+  if (e.label) parts.push(e.label);
+  parts.push(e.confirm ? "[confirm]" : "[no-confirm]");
+  if (e.language) parts.push(`lang:${e.language}`);
+  return "  " + parts.join("  ");
+}
+
+export function defaultLanguage(configFile: string, language: string): void {
+  store.writeConfig(configFile, store.setDefaultLanguage(requireConfig(configFile), language));
+  console.log(`✅ default language set to ${language.trim()}`);
 }
 
 export function tokenRotate(configFile: string): void {
@@ -88,9 +110,10 @@ export function setPort(configFile: string, portArg: string | undefined): void {
 
 export function show(configFile: string): void {
   const c = requireConfig(configFile);
-  console.log(`port:  ${c.bridgePort}`);
-  console.log(`token: ${c.bridgeToken ? "•••• (set)" : "(missing)"}`);
+  console.log(`port:     ${c.bridgePort}`);
+  console.log(`token:    ${c.bridgeToken ? "•••• (set)" : "(missing)"}`);
+  console.log(`language: ${c.defaultLanguage ?? "English"}`);
   const entries = store.listAllowlist(c);
   console.log(`allowlist (${entries.length}):`);
-  for (const e of entries) console.log(`  ${e.number}${e.label ? `  ${e.label}` : ""}`);
+  for (const e of entries) console.log(formatEntry(e));
 }
