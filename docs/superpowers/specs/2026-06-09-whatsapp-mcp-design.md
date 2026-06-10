@@ -125,9 +125,13 @@ don't block each other).
   message is persisted regardless of whether a client is connected.
 
 ### Send guardrail
-- Allowlist (JIDs and/or contact names) lives in `data/config.json`.
-- Enforced at **draft** time (reject non-allowlisted recipients early with a
-  clear error) and re-checked at **send** time.
+- Allowlist is **strictly numeric**, stored in `data/config.json` as a list of
+  numbers: a contact's phone number in international format (digits only, no
+  `+`, e.g. `5215512345678`) for 1:1 chats, or a group's numeric id (the digits
+  before `@g.us`) for groups. No names — the resolver converts any recipient to
+  its numeric id before checking.
+- Enforced at **draft** time (reject non-allowlisted numbers early with a clear
+  error) and re-checked at **send** time.
 
 ## Error handling
 
