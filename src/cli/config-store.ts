@@ -60,3 +60,12 @@ export function listAllowlist(config: RawConfig): { number: string; label?: stri
     typeof e === "string" ? { number: e } : { number: e.number, label: e.label }
   );
 }
+
+export function setPort(config: RawConfig, port: number): RawConfig {
+  if (!Number.isInteger(port) || port <= 0) throw new Error(`invalid port: ${port}`);
+  return { ...config, bridgePort: port };
+}
+
+export function rotateToken(config: RawConfig): RawConfig {
+  return { ...config, bridgeToken: generateToken() };
+}

@@ -6,6 +6,7 @@ import {
   createDefault, generateToken, readConfig, writeConfig,
 } from "../../src/cli/config-store.js";
 import { addAllowlist, removeAllowlist, listAllowlist } from "../../src/cli/config-store.js";
+import { setPort, rotateToken } from "../../src/cli/config-store.js";
 
 const tmpFile = () => join(mkdtempSync(join(tmpdir(), "agentchat-")), "config.json");
 
@@ -79,5 +80,23 @@ describe("config-store allowlist", () => {
     const file = tmpFile();
     writeConfig(file, addAllowlist(createDefault(), "5215512345678", "Mom"));
     expect(readConfig(file).allowlist).toEqual([{ number: "5215512345678", label: "Mom" }]);
+  });
+});
+
+describe("config-store port + token", () => {
+  it("sets a valid port", () => {
+    expect(setPort(createDefault(), 8080).bridgePort).toBe(8080);
+  });
+
+  it("rejects a non-positive or non-integer port", () => {
+    expect(() => setPort(createDefault(), 0)).toThrow(/port/i);
+    expect(() => setPort(createDefault(), 12.5)).toThrow(/port/i);
+  });
+
+  it("rotateToken changes the token and stays schema-valid", () => {
+    const c = createDefault();
+    const r = rotateToken(c);
+    expect(r.bridgeToken).not.toBe(c.bridgeToken);
+    expect(r.bridgeToken.length).toBeGreaterThan(20);
   });
 });
