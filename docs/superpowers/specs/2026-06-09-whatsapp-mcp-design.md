@@ -125,13 +125,19 @@ don't block each other).
   message is persisted regardless of whether a client is connected.
 
 ### Send guardrail
-- Allowlist is **strictly numeric**, stored in `data/config.json` as a list of
-  numbers: a contact's phone number in international format (digits only, no
-  `+`, e.g. `5215512345678`) for 1:1 chats, or a group's numeric id (the digits
-  before `@g.us`) for groups. No names — the resolver converts any recipient to
-  its numeric id before checking.
+- Allowlist enforcement is **strictly numeric**: a contact's phone number in
+  international format (digits only, no `+`, e.g. `5215512345678`) for 1:1 chats,
+  or a group's numeric id (the digits before `@g.us`) for groups. The resolver
+  converts any recipient to its numeric id before checking.
+- Config entries in `data/config.json` may be **either** a bare number string
+  **or** an object `{ "number": "...", "label": "..." }`. The optional `label`
+  is for the operator's readability only — it is stripped at load time and never
+  affects enforcement. Names are not part of the check.
 - Enforced at **draft** time (reject non-allowlisted numbers early with a clear
   error) and re-checked at **send** time.
+- Separately, contacts' display names are stored in the `contacts` table and
+  exposed via `list_contacts`, so the LLM can address people by name and resolve
+  to a number — this is orthogonal to the allowlist.
 
 ## Error handling
 

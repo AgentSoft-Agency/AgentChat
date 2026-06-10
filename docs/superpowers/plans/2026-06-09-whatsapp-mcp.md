@@ -461,9 +461,9 @@ import { describe, it, expect } from "vitest";
 import { parseConfig } from "../../src/shared/config.js";
 
 describe("parseConfig", () => {
-  it("accepts numeric allowlist entries and normalizes them", () => {
+  it("accepts bare-number and labeled allowlist entries, normalizing to numbers", () => {
     const cfg = parseConfig({
-      allowlist: ["+52 155 1234 5678", "120363012345678901"],
+      allowlist: ["+52 155 1234 5678", { number: "120363012345678901", label: "Family" }],
       bridgeToken: "secret",
       bridgePort: 7766,
     });
@@ -473,6 +473,12 @@ describe("parseConfig", () => {
   it("rejects a non-numeric allowlist entry", () => {
     expect(() =>
       parseConfig({ allowlist: ["mom"], bridgeToken: "s", bridgePort: 7766 })
+    ).toThrow(/numeric/i);
+  });
+
+  it("rejects a labeled entry whose number is non-numeric", () => {
+    expect(() =>
+      parseConfig({ allowlist: [{ number: "mom", label: "Mom" }], bridgeToken: "s", bridgePort: 7766 })
     ).toThrow(/numeric/i);
   });
 
@@ -496,15 +502,23 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import type { AppConfig } from "./types.js";
 
-const numericEntry = z
+// A number, after stripping non-digits, must be non-empty digits.
+const numericString = z
   .string()
   .transform((s) => s.replace(/[^0-9]/g, ""))
   .refine((s) => s.length > 0 && /^[0-9]+$/.test(s), {
     message: "allowlist entries must be numeric (phone digits or group id)",
   });
 
+// An entry is either a bare numeric string or { number, label? }; both
+// normalize to the numeric string. The label is for readability only.
+const allowlistEntry = z.union([
+  numericString,
+  z.object({ number: numericString, label: z.string().optional() }).transform((e) => e.number),
+]);
+
 const schema = z.object({
-  allowlist: z.array(numericEntry).default([]),
+  allowlist: z.array(allowlistEntry).default([]),
   bridgeToken: z.string().min(1),
   bridgePort: z.number().int().positive().default(7766),
 });
@@ -1781,7 +1795,10 @@ Append to `.gitignore`:
 
 ```json
 {
-  "allowlist": ["5215512345678", "120363012345678901"],
+  "allowlist": [
+    { "number": "5215512345678", "label": "Mom" },
+    { "number": "120363012345678901", "label": "Family group" }
+  ],
   "bridgeToken": "change-me-to-a-long-random-string",
   "bridgePort": 7766
 }
@@ -1808,8 +1825,11 @@ npm install
 cp data/config.example.json data/config.json   # edit allowlist + bridgeToken
 ```
 
-Allowlist entries are **strictly numeric**: a contact's phone digits (no `+`) or
-a group's numeric id.
+Allowlist enforcement is **strictly numeric**: a contact's phone digits (no `+`)
+or a group's numeric id. Each entry may be a bare number string **or**
+`{ "number": "...", "label": "..." }` — the `label` is for your reference only
+and never affects the check. You can still address contacts by name in the tools
+(via `list_contacts`); that's separate from the allowlist.
 
 ## Run
 
