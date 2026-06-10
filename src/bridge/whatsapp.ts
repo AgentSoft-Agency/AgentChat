@@ -35,7 +35,7 @@ export async function startWhatsApp(
       if (u.connection === "close") {
         const code = (u.lastDisconnect?.error as Boom)?.output?.statusCode;
         if (code === DisconnectReason.loggedOut) { state = "needs_relink"; }
-        else { state = "connecting"; void connect(); }
+        else { state = "connecting"; lastQr = null; void connect(); }
       }
     });
     onEvent(sock);

@@ -4,7 +4,7 @@ export interface BridgeDeps {
   token: string;
   sendText: (jid: string, text: string) => Promise<string>;
   sendMedia: (jid: string, filePath: string, caption?: string) => Promise<string>;
-  status: () => { state: string; qr: string | null };
+  status: () => { state: string; qr?: string | null };
 }
 
 function readJson(req: any): Promise<any> {
@@ -23,7 +23,11 @@ export function createBridgeApi(deps: BridgeDeps): Server {
     };
     try {
       if (req.method === "GET" && req.url === "/status") {
-        return send(200, deps.status());
+        // Only expose connection state, never the raw QR (a linking credential),
+        // on this unauthenticated endpoint. The bridge prints the QR to its own
+        // terminal for linking.
+        const { state } = deps.status();
+        return send(200, { state });
       }
       if (req.headers.authorization !== `Bearer ${deps.token}`) {
         return send(401, { error: "unauthorized" });
