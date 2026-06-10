@@ -12,7 +12,7 @@ const p = paths();
 const config = loadConfig(p.configFile);
 const store = new Store(openDb(p.dbFile));
 const bridge = httpBridgeClient(config.bridgePort, config.bridgeToken);
-const core = new ToolCore(store, bridge, new DraftStore(), config.allowlist.map((e) => e.number));
+const core = new ToolCore(store, bridge, new DraftStore(), config.allowlist, config.defaultLanguage);
 
 const server = buildServer(core);
 await server.connect(new StdioServerTransport());

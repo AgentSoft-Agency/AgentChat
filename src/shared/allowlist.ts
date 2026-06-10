@@ -6,9 +6,8 @@ export function resolveRecipient(to: string): string {
   return to.includes("@") ? to : numberToContactJid(to);
 }
 
-/** (Migrated to AllowEntry[] in a later task.) */
-export function isAllowed(allowlist: string[], jid: string): boolean {
-  return allowlist.includes(jidToNumber(jid));
+export function isAllowed(allowlist: AllowEntry[], jid: string): boolean {
+  return findPolicy(allowlist, jid) !== undefined;
 }
 
 /** The policy entry for a jid, or undefined if not allowed. */

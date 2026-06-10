@@ -15,7 +15,16 @@ describe("ToolCore", () => {
   let store: Store;
   beforeEach(() => {
     store = new Store(openDb(":memory:"));
-    core = new ToolCore(store, fakeBridge, new DraftStore(), ["5215512345678"]);
+    core = new ToolCore(
+      store,
+      fakeBridge,
+      new DraftStore(),
+      [
+        { number: "5215512345678", label: "Mom", confirm: true, language: "Spanish" },
+        { number: "5215500000000", label: "Bot", confirm: false },
+      ],
+      "English"
+    );
   });
 
   it("drafts a message only for allowlisted numbers", () => {
@@ -24,10 +33,32 @@ describe("ToolCore", () => {
     expect(() => core.draftMessage("5219999999999", "hi")).toThrow(/not allowed/i);
   });
 
+  it("draft surfaces requiresConfirmation and resolved language", () => {
+    expect(core.draftMessage("5215512345678", "hi")).toMatchObject({
+      requiresConfirmation: true,
+      language: "Spanish",
+    });
+    expect(core.draftMessage("5215500000000", "hi")).toMatchObject({
+      requiresConfirmation: false,
+      language: "English",
+    });
+  });
+
+  it("one-shot send_message sends for confirm:false numbers", async () => {
+    expect(await core.sendMessage("5215500000000", "hi")).toEqual({ id: "sent-1" });
+  });
+
+  it("one-shot send_message rejects confirm:true numbers", async () => {
+    await expect(core.sendMessage("5215512345678", "hi")).rejects.toThrow(/requires confirmation/i);
+  });
+
+  it("one-shot send_message rejects non-allowlisted numbers", async () => {
+    await expect(core.sendMessage("5219999999999", "hi")).rejects.toThrow(/not allowed/i);
+  });
+
   it("sends a previously created draft", async () => {
     const { draftId } = core.draftMessage("5215512345678", "hi");
-    const r = await core.sendDraft(draftId);
-    expect(r.id).toBe("sent-1");
+    expect((await core.sendDraft(draftId)).id).toBe("sent-1");
   });
 
   it("rejects an unknown or expired draft", async () => {
@@ -35,13 +66,13 @@ describe("ToolCore", () => {
   });
 
   it("returns a media path from the bridge", async () => {
-    const store = new Store(openDb(":memory:"));
-    const core = new ToolCore(
-      store,
+    const c = new ToolCore(
+      new Store(openDb(":memory:")),
       { ...fakeBridge, downloadMedia: async (id: string) => `/data/media/${id}` } as any,
       new DraftStore(),
-      []
+      [],
+      "English"
     );
-    expect(await core.downloadMedia("m1")).toEqual({ path: "/data/media/m1" });
+    expect(await c.downloadMedia("m1")).toEqual({ path: "/data/media/m1" });
   });
 });

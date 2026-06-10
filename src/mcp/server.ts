@@ -39,6 +39,10 @@ export function buildServer(core: ToolCore): McpServer {
     { title: "Draft media", description: "Prepare a media message (does not send). Returns draftId.", inputSchema: { to: z.string(), filePath: z.string(), caption: z.string().optional() } },
     async ({ to, filePath, caption }) => json(core.draftMedia(to, filePath, caption)));
 
+  server.registerTool("send_message",
+    { title: "Send message", description: "Send a text message in one step. Allowed only for numbers configured confirm:false; confirm:true numbers must use draft_message → send_draft.", inputSchema: { to: z.string(), text: z.string() } },
+    async ({ to, text }) => json(await core.sendMessage(to, text)));
+
   server.registerTool("send_draft",
     { title: "Send draft", description: "Send a previously drafted message by draftId", inputSchema: { draftId: z.string() } },
     async ({ draftId }) => json(await core.sendDraft(draftId)));

@@ -9,13 +9,13 @@ describe("allowlist", () => {
     expect(resolveRecipient("120363@g.us")).toBe("120363@g.us");
   });
   it("allows a contact whose number is on the list", () => {
-    expect(isAllowed(["5215512345678"], "5215512345678@s.whatsapp.net")).toBe(true);
+    expect(isAllowed([{ number: "5215512345678", confirm: true }], "5215512345678@s.whatsapp.net")).toBe(true);
   });
   it("allows a group whose numeric id is on the list", () => {
-    expect(isAllowed(["120363012345678901"], "120363012345678901@g.us")).toBe(true);
+    expect(isAllowed([{ number: "120363012345678901", confirm: true }], "120363012345678901@g.us")).toBe(true);
   });
   it("rejects a recipient not on the list", () => {
-    expect(isAllowed(["5215512345678"], "5219999999999@s.whatsapp.net")).toBe(false);
+    expect(isAllowed([{ number: "5215512345678", confirm: true }], "5219999999999@s.whatsapp.net")).toBe(false);
   });
   it("findPolicy returns the entry for an allowlisted jid", () => {
     const list = [{ number: "5215512345678", label: "Mom", confirm: false, language: "Spanish" }];
