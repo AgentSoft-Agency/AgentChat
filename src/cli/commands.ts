@@ -9,6 +9,18 @@ function requireConfig(configFile: string): store.RawConfig {
   return store.readConfig(configFile);
 }
 
+/** Resolves with "" when stdin closes mid-question (non-interactive / piped use). */
+function question(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
+  return new Promise((resolve) => {
+    const onClose = () => resolve("");
+    rl.once("close", onClose);
+    rl.question(prompt).then((ans) => {
+      rl.removeListener("close", onClose);
+      resolve(ans);
+    }).catch(() => resolve(""));
+  });
+}
+
 export async function init(configFile: string, force: boolean): Promise<void> {
   if (existsSync(configFile) && !force) {
     throw new Error(`config already exists at ${configFile} (use --force to overwrite)`);
@@ -16,11 +28,11 @@ export async function init(configFile: string, force: boolean): Promise<void> {
   let config = store.createDefault();
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const portAns = (await rl.question(`Bridge port [${config.bridgePort}]: `)).trim();
+    const portAns = (await question(rl, `Bridge port [${config.bridgePort}]: `)).trim();
     if (portAns) config = store.setPort(config, Number(portAns));
-    const num = (await rl.question("First allowed number (blank to skip): ")).trim();
+    const num = (await question(rl, "First allowed number (blank to skip): ")).trim();
     if (num) {
-      const label = (await rl.question("Label (optional): ")).trim();
+      const label = (await question(rl, "Label (optional): ")).trim();
       config = store.addAllowlist(config, num, label || undefined);
     }
   } finally {

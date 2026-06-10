@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": { "agent-chat": "src/cli/index.ts" },
   "scripts": {
     "start:bridge": "tsx src/bridge/index.ts",
     "start:mcp": "tsx src/mcp/index.ts",
+    "cli": "tsx src/cli/index.ts",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
