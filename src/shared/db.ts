@@ -33,17 +33,17 @@ CREATE TABLE IF NOT EXISTS contacts (
   phone TEXT
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
-  id, text, content='messages', content_rowid='rowid'
+  text, content='messages', content_rowid='rowid'
 );
 CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN
-  INSERT INTO messages_fts(rowid, id, text) VALUES (new.rowid, new.id, new.text);
+  INSERT INTO messages_fts(rowid, text) VALUES (new.rowid, new.text);
 END;
 CREATE TRIGGER IF NOT EXISTS messages_ad AFTER DELETE ON messages BEGIN
-  INSERT INTO messages_fts(messages_fts, rowid, id, text) VALUES('delete', old.rowid, old.id, old.text);
+  INSERT INTO messages_fts(messages_fts, rowid, text) VALUES('delete', old.rowid, old.text);
 END;
 CREATE TRIGGER IF NOT EXISTS messages_au AFTER UPDATE ON messages BEGIN
-  INSERT INTO messages_fts(messages_fts, rowid, id, text) VALUES('delete', old.rowid, old.id, old.text);
-  INSERT INTO messages_fts(rowid, id, text) VALUES (new.rowid, new.id, new.text);
+  INSERT INTO messages_fts(messages_fts, rowid, text) VALUES('delete', old.rowid, old.text);
+  INSERT INTO messages_fts(rowid, text) VALUES (new.rowid, new.text);
 END;
 `;
 
