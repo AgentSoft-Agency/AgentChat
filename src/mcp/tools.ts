@@ -35,6 +35,11 @@ export class ToolCore {
     return { draftId: d.id, toJid: jid, preview: `To ${jid}: [media ${filePath}] ${caption ?? ""}` };
   }
 
+  async downloadMedia(messageId: string): Promise<{ path: string }> {
+    const path = await this.bridge.downloadMedia(messageId);
+    return { path };
+  }
+
   async sendDraft(draftId: string): Promise<{ id: string }> {
     const d = this.drafts.consume(draftId);
     if (!d) throw new Error(`unknown or expired draft: ${draftId}`);

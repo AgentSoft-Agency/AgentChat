@@ -5,6 +5,7 @@ export interface BridgeDeps {
   sendText: (jid: string, text: string) => Promise<string>;
   sendMedia: (jid: string, filePath: string, caption?: string) => Promise<string>;
   status: () => { state: string; qr?: string | null };
+  downloadMedia: (messageId: string) => Promise<string>;
 }
 
 function readJson(req: any): Promise<any> {
@@ -40,6 +41,10 @@ export function createBridgeApi(deps: BridgeDeps): Server {
       if (req.method === "POST" && req.url === "/send-media") {
         const id = await deps.sendMedia(body.to, body.filePath, body.caption);
         return send(200, { id });
+      }
+      if (req.method === "POST" && req.url === "/download-media") {
+        const path = await deps.downloadMedia(body.messageId);
+        return send(200, { path });
       }
       return send(404, { error: "not found" });
     } catch (err: any) {

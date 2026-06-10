@@ -50,11 +50,14 @@ const api = createBridgeApi({
     return r?.key?.id ?? "";
   },
   status: () => ({ state: handle.status(), qr: handle.lastQr() }),
+  downloadMedia: async (messageId: string) => {
+    await saveMediaFor(messageId);
+    const m = store.getMessage(messageId);
+    if (!m?.mediaPath) throw new Error(`no media for ${messageId}`);
+    return m.mediaPath;
+  },
 });
 
 api.listen(config.bridgePort, "127.0.0.1", () =>
   console.error(`bridge api on 127.0.0.1:${config.bridgePort}`)
 );
-
-// saveMediaFor is wired to an endpoint in a later task (media download).
-void saveMediaFor;

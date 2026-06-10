@@ -43,5 +43,9 @@ export function buildServer(core: ToolCore): McpServer {
     { title: "Send draft", description: "Send a previously drafted message by draftId", inputSchema: { draftId: z.string() } },
     async ({ draftId }) => json(await core.sendDraft(draftId)));
 
+  server.registerTool("download_media",
+    { title: "Download media", description: "Download a media message; returns a local file path", inputSchema: { messageId: z.string() } },
+    async ({ messageId }) => json(await core.downloadMedia(messageId)));
+
   return server;
 }

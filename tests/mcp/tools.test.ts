@@ -33,4 +33,15 @@ describe("ToolCore", () => {
   it("rejects an unknown or expired draft", async () => {
     await expect(core.sendDraft("nope")).rejects.toThrow(/draft/i);
   });
+
+  it("returns a media path from the bridge", async () => {
+    const store = new Store(openDb(":memory:"));
+    const core = new ToolCore(
+      store,
+      { ...fakeBridge, downloadMedia: async (id: string) => `/data/media/${id}` } as any,
+      new DraftStore(),
+      []
+    );
+    expect(await core.downloadMedia("m1")).toEqual({ path: "/data/media/m1" });
+  });
 });
