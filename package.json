@@ -12,7 +12,10 @@
     "cli": "tsx src/cli/index.ts",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "release": "commit-and-tag-version"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
