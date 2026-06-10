@@ -3,7 +3,6 @@ export interface Chat {
   name: string | null;
   isGroup: boolean;
   lastTs: number | null;
-  unreadCount: number;
 }
 
 export interface Message {

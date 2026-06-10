@@ -10,7 +10,7 @@ function rowToMessage(r: any): Message {
 }
 
 function rowToChat(r: any): Chat {
-  return { jid: r.jid, name: r.name, isGroup: !!r.is_group, lastTs: r.last_ts, unreadCount: r.unread_count };
+  return { jid: r.jid, name: r.name, isGroup: !!r.is_group, lastTs: r.last_ts };
 }
 
 export class Store {
@@ -49,17 +49,25 @@ export class Store {
     return rows.map(rowToMessage).reverse();
   }
 
-  listChats(limit: number): Chat[] {
-    return this.db.prepare(
-      `SELECT * FROM chats ORDER BY last_ts DESC LIMIT ?`
-    ).all(limit).map(rowToChat);
+  listChats(limit: number, query?: string): Chat[] {
+    const rows = query
+      ? this.db.prepare(`SELECT * FROM chats WHERE name LIKE ? ORDER BY last_ts DESC LIMIT ?`).all(`%${query}%`, limit)
+      : this.db.prepare(`SELECT * FROM chats ORDER BY last_ts DESC LIMIT ?`).all(limit);
+    return rows.map(rowToChat);
   }
 
-  search(query: string, limit: number): Message[] {
-    const rows = this.db.prepare(
-      `SELECT m.* FROM messages_fts f JOIN messages m ON m.rowid = f.rowid
-       WHERE messages_fts MATCH ? ORDER BY m.ts DESC LIMIT ?`
-    ).all(query, limit);
+  search(query: string, limit: number, chatJid?: string): Message[] {
+    const tokens = query.match(/[\p{L}\p{N}]+/gu) ?? [];
+    if (tokens.length === 0) return [];
+    const match = tokens.map((t) => `"${t}"`).join(" ");
+    const sql = chatJid
+      ? `SELECT m.* FROM messages_fts f JOIN messages m ON m.rowid = f.rowid
+         WHERE messages_fts MATCH ? AND m.chat_jid = ? ORDER BY m.ts DESC LIMIT ?`
+      : `SELECT m.* FROM messages_fts f JOIN messages m ON m.rowid = f.rowid
+         WHERE messages_fts MATCH ? ORDER BY m.ts DESC LIMIT ?`;
+    const rows = chatJid
+      ? this.db.prepare(sql).all(match, chatJid, limit)
+      : this.db.prepare(sql).all(match, limit);
     return rows.map(rowToMessage);
   }
 

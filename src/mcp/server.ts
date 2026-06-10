@@ -8,16 +8,16 @@ export function buildServer(core: ToolCore): McpServer {
   const server = new McpServer({ name: "whatsapp-mcp", version: "0.1.0" });
 
   server.registerTool("list_chats",
-    { title: "List chats", description: "Recent WhatsApp chats", inputSchema: { limit: z.number().optional() } },
-    async ({ limit }) => json(core.listChats(limit)));
+    { title: "List chats", description: "Recent WhatsApp chats (optionally filtered by name)", inputSchema: { limit: z.number().optional(), query: z.string().optional() } },
+    async ({ limit, query }) => json(core.listChats(limit, query)));
 
   server.registerTool("get_messages",
     { title: "Get messages", description: "Messages in a chat (newest last)", inputSchema: { chat: z.string(), limit: z.number().optional(), before: z.number().optional() } },
     async ({ chat, limit, before }) => json(core.getMessages(chat, limit, before)));
 
   server.registerTool("search_messages",
-    { title: "Search messages", description: "Full-text search across history", inputSchema: { query: z.string(), limit: z.number().optional() } },
-    async ({ query, limit }) => json(core.searchMessages(query, limit)));
+    { title: "Search messages", description: "Full-text search across history (optionally within one chat)", inputSchema: { query: z.string(), chat: z.string().optional(), limit: z.number().optional() } },
+    async ({ query, chat, limit }) => json(core.searchMessages(query, chat, limit)));
 
   server.registerTool("list_contacts",
     { title: "List contacts", description: "Find contacts by name/number", inputSchema: { query: z.string().optional() } },

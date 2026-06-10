@@ -12,11 +12,13 @@ export class ToolCore {
     private allowlist: string[]
   ) {}
 
-  listChats(limit = 20) { return this.store.listChats(limit); }
+  listChats(limit = 20, query?: string) { return this.store.listChats(limit, query); }
   getMessages(chat: string, limit = 50, before?: number) {
     return this.store.getMessages(resolveRecipient(chat), limit, before);
   }
-  searchMessages(query: string, limit = 20) { return this.store.search(query, limit); }
+  searchMessages(query: string, chat?: string, limit = 20) {
+    return this.store.search(query, limit, chat ? resolveRecipient(chat) : undefined);
+  }
   listContacts(query = "") { return this.store.findContacts(query); }
   getNewMessages(limit = 50) { return this.store.takeUnseen(limit); }
   status() { return this.bridge.status(); }

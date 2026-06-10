@@ -55,4 +55,26 @@ describe("Store", () => {
     store.upsertChatName("120363@g.us", null, true);
     expect(store.listChats(10).find((c) => c.jid === "120363@g.us")?.name).toBe("Family");
   });
+
+  it("search tolerates phrases, numbers and punctuation without throwing", () => {
+    store.upsertMessage(msg({ id: "a", text: "dinner at +52 555" }));
+    store.upsertMessage(msg({ id: "b", text: "call me (please)" }));
+    expect(store.search('+52 555', 10).map((m) => m.id)).toContain("a");
+    expect(() => store.search('a"b (', 10)).not.toThrow();
+    expect(store.search("", 10)).toEqual([]);
+  });
+
+  it("search can be scoped to a single chat", () => {
+    store.upsertMessage(msg({ id: "a", chatJid: "111@s.whatsapp.net", text: "dinner here" }));
+    store.upsertMessage(msg({ id: "b", chatJid: "222@s.whatsapp.net", text: "dinner there" }));
+    expect(store.search("dinner", 10, "222@s.whatsapp.net").map((m) => m.id)).toEqual(["b"]);
+  });
+
+  it("listChats filters by name query", () => {
+    store.upsertChatName("aaa@s.whatsapp.net", "Alice", false);
+    store.upsertChatName("bbb@s.whatsapp.net", "Bob", false);
+    expect(store.listChats(10, "Ali").map((c) => c.jid)).toEqual(["aaa@s.whatsapp.net"]);
+    expect(store.listChats(10, "Bob").map((c) => c.jid)).toEqual(["bbb@s.whatsapp.net"]);
+    expect(store.listChats(10).length).toBeGreaterThanOrEqual(2);
+  });
 });
