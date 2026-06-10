@@ -75,4 +75,22 @@ describe("ToolCore", () => {
     );
     expect(await c.downloadMedia("m1")).toEqual({ path: "/data/media/m1" });
   });
+
+  it("draftMedia surfaces requiresConfirmation and resolved language", () => {
+    expect(core.draftMedia("5215500000000", "/tmp/x.png", "cap")).toMatchObject({
+      requiresConfirmation: false,
+      language: "English",
+    });
+  });
+
+  it("list_contacts annotates allowlist policy and resolved language", () => {
+    store.upsertContact({ jid: "5215512345678@s.whatsapp.net", pushName: null, name: "Mom", phone: "5215512345678" });
+    store.upsertContact({ jid: "5219999999999@s.whatsapp.net", pushName: null, name: "Stranger", phone: "5219999999999" });
+    const mom = core.listContacts("Mom")[0] as any;
+    expect(mom).toMatchObject({ onAllowlist: true, requiresConfirmation: true, language: "Spanish" });
+    const stranger = core.listContacts("Stranger")[0] as any;
+    expect(stranger.onAllowlist).toBe(false);
+    expect(stranger.requiresConfirmation).toBeUndefined();
+    expect(stranger.language).toBeUndefined();
+  });
 });

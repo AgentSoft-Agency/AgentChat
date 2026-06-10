@@ -21,7 +21,14 @@ export class ToolCore {
   searchMessages(query: string, chat?: string, limit = 20) {
     return this.store.search(query, limit, chat ? resolveRecipient(chat) : undefined);
   }
-  listContacts(query = "") { return this.store.findContacts(query); }
+  listContacts(query = "") {
+    return this.store.findContacts(query).map((c) => {
+      const policy = findPolicy(this.allowlist, c.jid);
+      return policy
+        ? { ...c, onAllowlist: true as const, requiresConfirmation: policy.confirm, language: resolveLanguage(policy, this.defaultLanguage) }
+        : { ...c, onAllowlist: false as const };
+    });
+  }
   getNewMessages(limit = 50) { return this.store.takeUnseen(limit); }
   status() { return this.bridge.status(); }
 
