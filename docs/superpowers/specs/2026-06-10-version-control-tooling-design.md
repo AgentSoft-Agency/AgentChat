@@ -89,7 +89,7 @@ longer required.
 
 `.husky/commit-msg`:
 ```sh
-npx --no-install commitlint --edit "$1"
+npx --no -- commitlint --edit "$1"
 ```
 
 `.husky/pre-commit`:
