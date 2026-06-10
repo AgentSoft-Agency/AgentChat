@@ -49,4 +49,10 @@ describe("Store", () => {
     store.upsertContact({ jid: "111@s.whatsapp.net", pushName: "Al", name: null, phone: "111" });
     expect(store.findContacts("Al")[0].jid).toBe("111@s.whatsapp.net");
   });
+
+  it("sets a chat name without clobbering on null", () => {
+    store.upsertChatName("120363@g.us", "Family", true);
+    store.upsertChatName("120363@g.us", null, true);
+    expect(store.listChats(10).find((c) => c.jid === "120363@g.us")?.name).toBe("Family");
+  });
 });

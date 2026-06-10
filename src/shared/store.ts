@@ -78,6 +78,13 @@ export class Store {
     return tx(limit);
   }
 
+  upsertChatName(jid: string, name: string | null, isGroup: boolean): void {
+    this.db.prepare(
+      `INSERT INTO chats (jid, name, is_group, unread_count) VALUES (?,?,?,0)
+       ON CONFLICT(jid) DO UPDATE SET name=COALESCE(excluded.name, chats.name)`
+    ).run(jid, name, isGroup ? 1 : 0);
+  }
+
   upsertContact(c: Contact): void {
     this.db.prepare(
       `INSERT INTO contacts (jid, push_name, name, phone) VALUES (@jid,@pushName,@name,@phone)

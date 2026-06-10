@@ -20,6 +20,11 @@ mkdirSync(p.mediaDir, { recursive: true });
 const handle = await startWhatsApp(p.authDir, (sock: WASocket) => {
   sock.ev.on("messages.upsert", (e) => ingestMessagesUpsert(store, e));
   sock.ev.on("contacts.upsert", (c) => ingestContactsUpsert(store, c));
+  sock.ev.on("groups.upsert", (groups) => {
+    for (const g of groups) {
+      if (g?.id) store.upsertChatName(g.id, g.subject ?? null, true);
+    }
+  });
 });
 
 const mediaLogger = pino({ level: "warn" }) as unknown as ILogger;
