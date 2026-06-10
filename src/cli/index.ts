@@ -48,6 +48,7 @@ async function main(): Promise<void> {
       break;
     }
     case "port": {
+      if (!rest[0]) throw new Error("usage: agent-chat port <number>");
       cmd.setPort(p.configFile, rest[0]);
       break;
     }

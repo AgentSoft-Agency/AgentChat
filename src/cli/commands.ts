@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import * as store from "./config-store.js";
 
 function requireConfig(configFile: string): store.RawConfig {
@@ -9,16 +9,27 @@ function requireConfig(configFile: string): store.RawConfig {
   return store.readConfig(configFile);
 }
 
-/** Resolves with "" when stdin closes mid-question (non-interactive / piped use). */
-function question(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    const onClose = () => resolve("");
-    rl.once("close", onClose);
-    rl.question(prompt).then((ans) => {
-      rl.removeListener("close", onClose);
-      resolve(ans);
-    }).catch(() => resolve(""));
-  });
+interface Asker {
+  (prompt: string): Promise<string>;
+  close(): void;
+}
+
+function makeAsker(): Asker {
+  if (process.stdin.isTTY) {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (async (q: string) => (await rl.question(q)).trim()) as Asker;
+    ask.close = () => rl.close();
+    return ask;
+  }
+  // Non-interactive: consume all piped stdin, answer prompts in order.
+  const lines = readFileSync(0, "utf8").split("\n");
+  let i = 0;
+  const ask = (async (q: string) => {
+    process.stdout.write(q);
+    return (lines[i++] ?? "").trim();
+  }) as Asker;
+  ask.close = () => {};
+  return ask;
 }
 
 export async function init(configFile: string, force: boolean): Promise<void> {
@@ -26,17 +37,17 @@ export async function init(configFile: string, force: boolean): Promise<void> {
     throw new Error(`config already exists at ${configFile} (use --force to overwrite)`);
   }
   let config = store.createDefault();
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  const ask = makeAsker();
   try {
-    const portAns = (await question(rl, `Bridge port [${config.bridgePort}]: `)).trim();
+    const portAns = await ask(`Bridge port [${config.bridgePort}]: `);
     if (portAns) config = store.setPort(config, Number(portAns));
-    const num = (await question(rl, "First allowed number (blank to skip): ")).trim();
+    const num = await ask("First allowed number (blank to skip): ");
     if (num) {
-      const label = (await question(rl, "Label (optional): ")).trim();
+      const label = await ask("Label (optional): ");
       config = store.addAllowlist(config, num, label || undefined);
     }
   } finally {
-    rl.close();
+    ask.close();
   }
   store.writeConfig(configFile, config);
   console.log(`\n✅ wrote ${configFile} (token generated, mode 600). Next: agent-chat link`);
