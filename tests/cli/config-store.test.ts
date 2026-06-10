@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  createDefault, generateToken, readConfig, writeConfig,
+  createDefault, generateToken, normalizeNumber, readConfig, writeConfig,
 } from "../../src/cli/config-store.js";
 import { addAllowlist, removeAllowlist, listAllowlist } from "../../src/cli/config-store.js";
 import { setPort, rotateToken } from "../../src/cli/config-store.js";
@@ -37,6 +37,18 @@ describe("config-store core", () => {
     // bridgeToken missing → invalid
     writeFileSync(file, '{"allowlist":[],"bridgePort":7766}');
     expect(() => readConfig(file)).toThrow();
+  });
+
+  it("normalizeNumber keeps only digits", () => {
+    expect(normalizeNumber("+52 1 55 1234 5678")).toBe("5215512345678");
+    expect(normalizeNumber("abc")).toBe("");
+  });
+
+  it("writeConfig rejects an invalid config and does not create the file", () => {
+    const file = tmpFile();
+    const bad = { allowlist: [], bridgeToken: "", bridgePort: 7766 }; // empty token is invalid
+    expect(() => writeConfig(file, bad)).toThrow();
+    expect(existsSync(file)).toBe(false);
   });
 });
 
@@ -98,5 +110,6 @@ describe("config-store port + token", () => {
     const r = rotateToken(c);
     expect(r.bridgeToken).not.toBe(c.bridgeToken);
     expect(r.bridgeToken.length).toBeGreaterThan(20);
+    expect(() => writeConfig(tmpFile(), r)).not.toThrow();
   });
 });
