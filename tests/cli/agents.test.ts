@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildAddArgs, buildRemoveArgs } from "../../src/cli/agents/claude-code.js";
 import { listAgents, getAgent } from "../../src/cli/agents/registry.js";
+import { isScope, SCOPES } from "../../src/cli/agents/types.js";
 
 describe("claude-code argv builders", () => {
   it("builds the `claude mcp add` argv with env, scope and the -- command boundary", () => {
@@ -22,6 +23,16 @@ describe("claude-code argv builders", () => {
 
   it("builds the `claude mcp remove` argv", () => {
     expect(buildRemoveArgs("user")).toEqual(["mcp", "remove", "agent-chat", "-s", "user"]);
+  });
+});
+
+describe("scope helpers", () => {
+  it("recognises the valid scopes", () => {
+    expect(SCOPES).toEqual(["user", "project", "local"]);
+    for (const s of SCOPES) expect(isScope(s)).toBe(true);
+  });
+  it("rejects an unknown scope", () => {
+    expect(isScope("bogus")).toBe(false);
   });
 });
 

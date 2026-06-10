@@ -5,7 +5,7 @@ import { paths, type Paths } from "../shared/paths.js";
 import { getAgent, listAgents } from "./agents/registry.js";
 import type { Scope } from "./agents/types.js";
 
-/** Absolute repo root, derived from this module's location (src/cli/install.ts → ../..). */
+/** Absolute repo root, derived from this module's location (src/cli/install.ts → ../../..). */
 export function repoRoot(): string {
   return join(fileURLToPath(import.meta.url), "..", "..", "..");
 }

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { resolve } from "node:path";
 import { paths } from "../../src/shared/paths.js";
 
 describe("paths", () => {
@@ -32,6 +33,16 @@ describe("paths", () => {
     } finally {
       if (prev === undefined) delete process.env.AGENT_CHAT_HOME;
       else process.env.AGENT_CHAT_HOME = prev;
+    }
+  });
+
+  it("falls back to <cwd>/data when AGENT_CHAT_HOME is unset", () => {
+    const prev = process.env.AGENT_CHAT_HOME;
+    delete process.env.AGENT_CHAT_HOME;
+    try {
+      expect(paths().dataDir).toBe(resolve(process.cwd(), "data"));
+    } finally {
+      if (prev !== undefined) process.env.AGENT_CHAT_HOME = prev;
     }
   });
 });
