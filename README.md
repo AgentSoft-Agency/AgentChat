@@ -29,32 +29,38 @@ AI client ──stdio──► MCP server ──HTTP(127.0.0.1 + token)──►
 
 ```bash
 npm install
-cp data/config.example.json data/config.json   # then edit it
+npm run cli -- init      # generates the bridge token, sets the port, optional first contact
 ```
 
-Edit `data/config.json`:
+`init` writes `data/config.json` (mode 600). Manage it later with the CLI rather
+than editing the file by hand:
 
-- `bridgeToken` — a long random string; the MCP server uses it to authenticate to
-  the bridge's localhost API.
-- `bridgePort` — the localhost port the bridge listens on (default `7766`).
-- `allowlist` — who the LLM is allowed to **send** to. Enforcement is **strictly
-  numeric**: a contact's phone number in international format (digits only, no
-  `+`) or a group's numeric id. Each entry may be a bare number string or
-  `{ "number": "...", "label": "..." }` — the `label` is for your reference only
-  and never affects the check. Reading and searching are always allowed,
-  regardless of the allowlist.
+```bash
+npm run cli -- allowlist add <number> [--label <name>]
+npm run cli -- allowlist remove <number>
+npm run cli -- allowlist list
+npm run cli -- token rotate          # then restart the bridge + MCP client
+npm run cli -- port <number>
+npm run cli -- show                  # token redacted
+```
+
+After `npm link`, the same commands are available as `agent-chat <command>`.
 
 ## Run
 
-1. **Start the bridge** and link your account (scan the QR with your phone via
-   WhatsApp → Linked Devices → Link a device):
+1. **Link your account** (scan the QR with your phone via WhatsApp → Linked
+   Devices → Link a device):
+
+   ```bash
+   npm run cli -- link            # or: npm run cli -- link --pair <number>
+   ```
+
+   Credentials are saved to `data/auth/`. Then start the always-on bridge
+   (which reconnects silently once linked):
 
    ```bash
    npm run start:bridge
    ```
-
-   The QR is printed in this terminal. After linking, credentials are saved to
-   `data/auth/` and future starts reconnect silently. Leave the bridge running.
 
 2. **Point your MCP client at the server** (stdio). Example client config:
 
