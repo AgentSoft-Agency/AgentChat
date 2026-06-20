@@ -67,7 +67,9 @@ const api = createBridgeApi({
     const r = await handle.sock().sendMessage(target, content);
     return r?.key?.id ?? "";
   },
-  status: () => ({ state: handle.status(), qr: handle.lastQr() }),
+  status: () => ({ state: handle.status(), qr: handle.lastQr(), pairingCode: handle.lastPairingCode() }),
+  relink: (pairingNumber?: string) => handle.relink(pairingNumber),
+  logout: () => handle.logout(),
   downloadMedia: async (messageId: string) => {
     await saveMediaFor(messageId);
     const m = store.getMessage(messageId);

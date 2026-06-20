@@ -4,8 +4,10 @@ export interface BridgeDeps {
   token: string;
   sendText: (jid: string, text: string) => Promise<string>;
   sendMedia: (jid: string, filePath: string, caption?: string) => Promise<string>;
-  status: () => { state: string; qr?: string | null };
+  status: () => { state: string; qr?: string | null; pairingCode?: string | null };
   downloadMedia: (messageId: string) => Promise<string>;
+  relink: (pairingNumber?: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 function readJson(req: any): Promise<any> {
@@ -25,15 +27,26 @@ export function createBridgeApi(deps: BridgeDeps): Server {
     try {
       if (req.method === "GET" && req.url === "/status") {
         // Only expose connection state, never the raw QR (a linking credential),
-        // on this unauthenticated endpoint. The bridge prints the QR to its own
-        // terminal for linking.
+        // on this unauthenticated endpoint. The authenticated /qr serves the QR.
         const { state } = deps.status();
         return send(200, { state });
       }
       if (req.headers.authorization !== `Bearer ${deps.token}`) {
         return send(401, { error: "unauthorized" });
       }
+      if (req.method === "GET" && req.url === "/qr") {
+        const { state, qr = null, pairingCode = null } = deps.status();
+        return send(200, { state, qr, pairingCode });
+      }
       const body = await readJson(req);
+      if (req.method === "POST" && req.url === "/relink") {
+        await deps.relink(body.pair);
+        return send(200, { ok: true });
+      }
+      if (req.method === "POST" && req.url === "/logout") {
+        await deps.logout();
+        return send(200, { ok: true });
+      }
       if (req.method === "POST" && req.url === "/send") {
         const id = await deps.sendText(body.to, body.text);
         return send(200, { id });
