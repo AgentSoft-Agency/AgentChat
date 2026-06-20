@@ -48,6 +48,25 @@ npm run cli -- show                  # token redacted
 
 After `npm link`, the same commands are available as `agent-chat <command>`.
 
+### Interactive menu
+
+Prefer a menu to memorizing flags? Run `agent-chat` with no command in a
+terminal (or `agent-chat menu` explicitly) to open an arrow-key interactive
+menu over the same commands — link/re-link, logout, allowlist, default language,
+token rotate, port, install/uninstall, and show config. It shows the live bridge
+status (connected / needs re-link / down) at the top and returns to the menu
+after each action.
+
+```bash
+npm run cli                  # opens the menu in a terminal
+npm run cli -- menu          # the same, explicitly
+```
+
+The menu only talks to the running bridge — it does **not** start, stop, or
+restart it. When piped or run without a terminal, bare `agent-chat` prints this
+help instead of opening the menu. If the bridge is down, the menu links via the
+standalone `agent-chat link` command rather than re-linking in place.
+
 ## Run
 
 1. **Link your account** (scan the QR with your phone via WhatsApp → Linked
@@ -138,7 +157,12 @@ These require a real phone and a test number on your allowlist:
 7. With the bridge running, simulate a re-link: `npm run cli -- logout`, then
    `npm run cli -- link`. Confirm a QR appears in the terminal, scan it, and
    `whatsapp_status` returns `connected` again — without restarting the bridge.
-8. Run `npm run cli -- logout` while the bridge is up; confirm the device
+8. Run `npm run cli` in a terminal → the interactive menu opens with the bridge
+   status header; pick an action (e.g. **Show config**) and confirm it runs and
+   returns to the menu; pick **Quit** to exit. Then run `npm run cli -- menu |
+   cat` (piping stdout makes it non-TTY) and confirm it prints the "needs a
+   terminal" error and exits non-zero.
+9. Run `npm run cli -- logout` while the bridge is up; confirm the device
    disappears from your phone's WhatsApp → Linked Devices list.
 
 ## Commits & releases
