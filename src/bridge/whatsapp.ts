@@ -67,7 +67,7 @@ export async function startWhatsApp(
     return sock;
   };
 
-  const relink = async (newPairing?: string): Promise<void> => {
+  const doRelink = async (newPairing?: string): Promise<void> => {
     generation++;                       // disarm the current socket's reconnect
     try { current?.end?.(undefined); } catch { /* already closed */ }
     clearAuthDir(authDir);
@@ -79,7 +79,7 @@ export async function startWhatsApp(
     await connect();                    // fresh socket emits a new QR / pairing code
   };
 
-  const logout = async (): Promise<void> => {
+  const doLogout = async (): Promise<void> => {
     generation++;                       // disarm the current socket's reconnect
     if (state === "connected") {
       try { await current.logout(); } catch { /* best effort */ }
@@ -92,6 +92,19 @@ export async function startWhatsApp(
     lastPairingCode = null;
     state = "needs_relink";
   };
+
+  // Run relink/logout strictly one-at-a-time. Two overlapping operations would
+  // otherwise both reach connect() and leave two live sockets ingesting events;
+  // the generation counter only disarms dead sockets, it does not serialize.
+  let opTail: Promise<unknown> = Promise.resolve();
+  const serialize = <T>(op: () => Promise<T>): Promise<T> => {
+    const run = opTail.then(op, op); // chain regardless of the prior op's outcome
+    opTail = run.then(() => {}, () => {});
+    return run;
+  };
+
+  const relink = (pairingNumber?: string): Promise<void> => serialize(() => doRelink(pairingNumber));
+  const logout = (): Promise<void> => serialize(() => doLogout());
 
   await connect();
   return {
