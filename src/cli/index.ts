@@ -37,7 +37,7 @@ async function main(): Promise<void> {
     }
     case "link": {
       const { values } = parseArgs({ args: rest, options: { pair: { type: "string" } } });
-      await runLink(p.authDir, values.pair);
+      await runLink(p, values.pair);
       break;
     }
     case "allowlist": {
