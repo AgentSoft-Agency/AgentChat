@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAllowOpts, formatStatusLine, chooseLaunch } from "../../src/cli/menu-actions.js";
+import { buildAllowOpts, formatStatusLine, chooseLaunch, formatAllowEntryLabel } from "../../src/cli/menu-actions.js";
 
 describe("buildAllowOpts", () => {
   it("omits blank label, blank language, and the default confirm choice", () => {
@@ -47,5 +47,26 @@ describe("chooseLaunch", () => {
   });
   it("prints help for no command without a TTY", () => {
     expect(chooseLaunch({ command: undefined, isTTY: false })).toBe("help");
+  });
+});
+
+describe("formatAllowEntryLabel", () => {
+  it("renders a bare number with just the confirm flag", () => {
+    expect(formatAllowEntryLabel({ number: "5215512345678", confirm: true })).toBe("+5215512345678  [confirm]");
+  });
+  it("includes label and language with no-confirm", () => {
+    expect(
+      formatAllowEntryLabel({ number: "5215599999999", label: "Mom", confirm: false, language: "Spanish" })
+    ).toBe("+5215599999999  Mom  [no-confirm]  lang:Spanish");
+  });
+  it("includes a label without language", () => {
+    expect(formatAllowEntryLabel({ number: "5215500000000", label: "Work", confirm: true })).toBe(
+      "+5215500000000  Work  [confirm]"
+    );
+  });
+  it("includes language without a label", () => {
+    expect(formatAllowEntryLabel({ number: "5215511111111", confirm: false, language: "English" })).toBe(
+      "+5215511111111  [no-confirm]  lang:English"
+    );
   });
 });

@@ -1,4 +1,5 @@
 import type { AllowOpts } from "./config-store.js";
+import type { AllowEntry } from "../shared/types.js";
 
 export type ConfirmChoice = "default" | "confirm" | "no-confirm";
 
@@ -14,6 +15,16 @@ export function buildAllowOpts(a: { label: string; confirmChoice: ConfirmChoice;
   const language = a.language.trim();
   if (language) opts.language = language;
   return opts;
+}
+
+/** One-line label for an allowlist entry in a select prompt:
+ *  `+<number>  <label?>  [confirm|no-confirm]  lang:<language?>`. */
+export function formatAllowEntryLabel(e: AllowEntry): string {
+  const parts = [`+${e.number}`];
+  if (e.label) parts.push(e.label);
+  parts.push(e.confirm ? "[confirm]" : "[no-confirm]");
+  if (e.language) parts.push(`lang:${e.language}`);
+  return parts.join("  ");
 }
 
 export interface ProbeResult {
