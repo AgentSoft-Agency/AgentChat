@@ -4,6 +4,8 @@ import { paths } from "../shared/paths.js";
 import * as cmd from "./commands.js";
 import { runLink } from "./link.js";
 import { runLogout } from "./logout.js";
+import { runMenu } from "./menu.js";
+import { chooseLaunch } from "./menu-actions.js";
 import { runInstall, runUninstall, listAgentsForDisplay } from "./install.js";
 import { isScope, type Scope } from "./agents/types.js";
 
@@ -22,6 +24,7 @@ Usage:
   agent-chat install [<agent>] [--scope user|project|local]   register the MCP into an agent
   agent-chat uninstall <agent> [--scope ...]                  remove it
   agent-chat show                                 print config (token redacted)
+  agent-chat menu                                 open the interactive menu
   agent-chat help
 `;
 
@@ -103,8 +106,20 @@ async function main(): Promise<void> {
     case "show":
       cmd.show(p.configFile);
       break;
+    case "menu":
+    case undefined: {
+      const decision = chooseLaunch({ command, isTTY: !!process.stdout.isTTY });
+      if (decision === "menu") {
+        await runMenu(p);
+        break;
+      }
+      if (decision === "error-needs-tty") {
+        throw new Error("interactive menu needs a terminal; run a specific command instead (see 'agent-chat help').");
+      }
+      console.log(HELP); // decision === "help"
+      break;
+    }
     case "help":
-    case undefined:
       console.log(HELP);
       break;
     default:

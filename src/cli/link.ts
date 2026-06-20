@@ -25,7 +25,7 @@ export async function runLink(p: Paths, pairingNumber?: string): Promise<void> {
 }
 
 /** Drive a re-link through the already-running bridge — no restart. */
-async function liveRelink(ctl: BridgeControl, pairingNumber?: string): Promise<void> {
+export async function liveRelink(ctl: BridgeControl, pairingNumber?: string): Promise<void> {
   console.log(
     pairingNumber
       ? `Requesting a pairing code for ${pairingNumber} on the running bridge…`
