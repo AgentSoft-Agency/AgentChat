@@ -42,6 +42,7 @@ npm run cli -- allowlist list
 npm run cli -- default-language "<language>"   # global default (default: English)
 npm run cli -- token rotate          # then restart the bridge + MCP client
 npm run cli -- port <number>
+npm run cli -- logout                # unlink the device from WhatsApp and clear the session
 npm run cli -- show                  # token redacted
 ```
 
@@ -55,6 +56,11 @@ After `npm link`, the same commands are available as `agent-chat <command>`.
    ```bash
    npm run cli -- link            # or: npm run cli -- link --pair <number>
    ```
+
+   If the bridge is already running, `link` re-links it **in place** — it clears
+   the dead session, shows a fresh QR (or pairing code) right here, and reconnects
+   with no restart. If the bridge isn't running, `link` links a standalone session
+   as above.
 
    Credentials are saved to `data/auth/`. Then start the always-on bridge
    (which reconnects silently once linked):
@@ -129,6 +135,11 @@ These require a real phone and a test number on your allowlist:
    arrives. Confirm `draft_message` to a non-allowlisted number is rejected.
 6. Send an image from the phone; call `download_media` with its message id;
    confirm the returned path exists and opens.
+7. With the bridge running, simulate a re-link: `npm run cli -- logout`, then
+   `npm run cli -- link`. Confirm a QR appears in the terminal, scan it, and
+   `whatsapp_status` returns `connected` again — without restarting the bridge.
+8. Run `npm run cli -- logout` while the bridge is up; confirm the device
+   disappears from your phone's WhatsApp → Linked Devices list.
 
 ## Commits & releases
 
