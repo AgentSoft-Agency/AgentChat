@@ -11,7 +11,9 @@ import { runInstall, runUninstall } from "./install.js";
 import { listAgents } from "./agents/registry.js";
 import { SCOPES, type Scope } from "./agents/types.js";
 import * as cmd from "./commands.js";
-import { buildAllowOpts, formatStatusLine } from "./menu-actions.js";
+import { buildAllowOpts, formatStatusLine, formatAllowEntryLabel } from "./menu-actions.js";
+import { normalizeNumber } from "./config-store.js";
+import type { AllowEntry } from "../shared/types.js";
 
 const nonEmpty = (v: string | undefined) => (v?.trim() ? undefined : "required");
 
@@ -149,34 +151,36 @@ async function allowlistAction(paths: Paths): Promise<void> {
   const sub = await select({
     message: "Allowlist",
     options: [
-      { value: "list", label: "List entries" },
-      { value: "add", label: "Add or update an entry" },
-      { value: "remove", label: "Remove an entry" },
+      { value: "add", label: "Add a number" },
+      { value: "view", label: "View / edit entries" },
       { value: "back", label: "Back" },
     ],
   });
   if (isCancel(sub) || sub === "back") return;
-
-  if (sub === "list") {
-    cmd.allowlist(paths.configFile, "list", undefined);
+  if (sub === "add") {
+    await addEntry(paths);
     return;
   }
-  if (sub === "remove") {
-    const num = await text({ message: "Number to remove (digits)", validate: nonEmpty });
-    if (isCancel(num)) return;
-    cmd.allowlist(paths.configFile, "remove", num);
-    return;
-  }
+  await viewEntries(paths);
+}
 
-  // add / update
+async function addEntry(paths: Paths): Promise<void> {
   const number = await text({ message: "Number (digits)", validate: nonEmpty });
   if (isCancel(number)) return;
+
+  const normalized = normalizeNumber(number);
+  const config = loadConfig(paths.configFile);
+  if (config.allowlist.some((e) => e.number === normalized)) {
+    log.warn(`${normalized} is already on the allowlist. Use 'View / edit entries' to change it.`);
+    return;
+  }
+
   const label = await text({ message: "Label (optional)", placeholder: "" });
   if (isCancel(label)) return;
   const confirmChoice = await select({
     message: "Require confirmation before this contact's messages reach the agent?",
     options: [
-      { value: "default", label: "Use the existing / default setting" },
+      { value: "default", label: "Use the default (require confirmation)" },
       { value: "confirm", label: "Yes — require confirmation" },
       { value: "no-confirm", label: "No — deliver without confirmation" },
     ],
@@ -187,6 +191,67 @@ async function allowlistAction(paths: Paths): Promise<void> {
 
   const opts = buildAllowOpts({ label, confirmChoice, language });
   cmd.allowlist(paths.configFile, "add", number, opts);
+}
+
+async function viewEntries(paths: Paths): Promise<void> {
+  const config = loadConfig(paths.configFile);
+  if (config.allowlist.length === 0) {
+    log.info("No allowlist entries yet. Choose 'Add a number' to create one.");
+    return;
+  }
+
+  const picked = await select({
+    message: "Select an entry",
+    options: [
+      ...config.allowlist.map((e) => ({ value: e.number, label: formatAllowEntryLabel(e) })),
+      { value: "__back__", label: "Back" },
+    ],
+  });
+  if (isCancel(picked) || picked === "__back__") return;
+
+  const entry = config.allowlist.find((e) => e.number === picked);
+  if (!entry) return; // config changed underneath us
+  await editEntry(paths, entry);
+}
+
+async function editEntry(paths: Paths, entry: AllowEntry): Promise<void> {
+  const op = await select({
+    message: `Entry +${entry.number}`,
+    options: [
+      { value: "update", label: "Update" },
+      { value: "remove", label: "Remove" },
+      { value: "back", label: "Back" },
+    ],
+  });
+  if (isCancel(op) || op === "back") return;
+
+  if (op === "remove") {
+    const ok = await confirm({ message: `Remove ${entry.number} from the allowlist?` });
+    if (isCancel(ok) || !ok) return;
+    cmd.allowlist(paths.configFile, "remove", entry.number);
+    return;
+  }
+
+  await updateEntry(paths, entry);
+}
+
+async function updateEntry(paths: Paths, entry: AllowEntry): Promise<void> {
+  const label = await text({ message: "Label", initialValue: entry.label ?? "" });
+  if (isCancel(label)) return;
+  const confirmChoice = await select({
+    message: "Require confirmation before this contact's messages reach the agent?",
+    initialValue: (entry.confirm ? "confirm" : "no-confirm") as "confirm" | "no-confirm",
+    options: [
+      { value: "confirm", label: "Yes — require confirmation" },
+      { value: "no-confirm", label: "No — deliver without confirmation" },
+    ],
+  });
+  if (isCancel(confirmChoice)) return;
+  const language = await text({ message: "Language (optional)", initialValue: entry.language ?? "" });
+  if (isCancel(language)) return;
+
+  const opts = buildAllowOpts({ label, confirmChoice, language });
+  cmd.allowlist(paths.configFile, "add", entry.number, opts);
 }
 
 async function installAction(): Promise<void> {
