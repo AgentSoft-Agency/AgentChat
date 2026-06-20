@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { paths } from "../shared/paths.js";
 import * as cmd from "./commands.js";
 import { runLink } from "./link.js";
+import { runLogout } from "./logout.js";
 import { runInstall, runUninstall, listAgentsForDisplay } from "./install.js";
 import { isScope, type Scope } from "./agents/types.js";
 
@@ -11,6 +12,7 @@ const HELP = `agent-chat — configure @agentsoft/agent-chat
 Usage:
   agent-chat init [--force]                       create data/config.json
   agent-chat link [--pair <number>]               link your WhatsApp account
+  agent-chat logout                               log out and clear the session
   agent-chat allowlist list
   agent-chat allowlist add <number> [--label <name>] [--confirm|--no-confirm] [--lang <language>]
   agent-chat allowlist remove <number>
@@ -40,6 +42,9 @@ async function main(): Promise<void> {
       await runLink(p, values.pair);
       break;
     }
+    case "logout":
+      await runLogout(p);
+      break;
     case "allowlist": {
       const { values, positionals } = parseArgs({
         args: rest.slice(1),
