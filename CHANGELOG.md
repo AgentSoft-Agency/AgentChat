@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.0](https://github.com/AgentSoft-Agency/AgentChat/compare/v0.1.0...v0.2.0) (2026-06-22)
+
+
+### Features
+
+* **bridge:** add /relink, /logout, and authenticated /qr endpoints ([6c82415](https://github.com/AgentSoft-Agency/AgentChat/commit/6c824151b549b0ef60958b13717fca9c64dec221))
+* **bridge:** add live relink/logout to the WhatsApp handle ([54df81a](https://github.com/AgentSoft-Agency/AgentChat/commit/54df81afc035d693301e5830edc8ea176396924c))
+* **cli:** add bridge-control HTTP client ([c805481](https://github.com/AgentSoft-Agency/AgentChat/commit/c8054811fd14936dd5d51be1dcc854721c03e925))
+* **cli:** add link/logout branch-decision helpers ([750728c](https://github.com/AgentSoft-Agency/AgentChat/commit/750728cf0d3c0e00ea2da3da6e389b65e4629920))
+* **cli:** add logout command ([e086777](https://github.com/AgentSoft-Agency/AgentChat/commit/e08677765e4fb21f9a650cac1b4edf550a1679e8))
+* **cli:** allowlist --confirm/--no-confirm/--lang flags and default-language command ([fef5540](https://github.com/AgentSoft-Agency/AgentChat/commit/fef5540c257a4abb384aa28b3f24882b91f3bcfe))
+* **cli:** formatAllowEntryLabel helper for the allowlist menu ([68f95ab](https://github.com/AgentSoft-Agency/AgentChat/commit/68f95abfc476af65876ab324d9e1e2b12283d2f8))
+* **cli:** interactive management menu ([2711089](https://github.com/AgentSoft-Agency/AgentChat/commit/2711089f01569352aa2e56a8042ea4a225f5cd12))
+* **cli:** live re-link through the running bridge from 'link' ([f22dbc5](https://github.com/AgentSoft-Agency/AgentChat/commit/f22dbc5083ebaf0be0afd5d73cf847e1a6ea0016))
+* **cli:** merging allowlist upsert with confirm/language; default language ([edb1aaf](https://github.com/AgentSoft-Agency/AgentChat/commit/edb1aaf9cfe7adbec351bd922d4b183968bfb57f))
+* **cli:** pure helpers for the interactive menu ([23788aa](https://github.com/AgentSoft-Agency/AgentChat/commit/23788aa37bb377ad66a397f021f77dc22b4215ba))
+* **cli:** split allowlist add/update with a selectable list ([5104d46](https://github.com/AgentSoft-Agency/AgentChat/commit/5104d46640b6c095ba92e29ba84d0f18264c9eeb))
+* **config:** per-number allowlist objects, defaultLanguage, policy helpers ([dc06546](https://github.com/AgentSoft-Agency/AgentChat/commit/dc065465e27af6c3e508d689fe2ee067e9dd5cf8))
+* **mcp:** annotate list_contacts with allowlist policy and language ([6eaf93c](https://github.com/AgentSoft-Agency/AgentChat/commit/6eaf93c9e533851680aac9ebed877ecf11ce05fd))
+* **mcp:** one-shot send_message gated to confirm:false; draft enrichment ([021b891](https://github.com/AgentSoft-Agency/AgentChat/commit/021b89164726e7f235c8e2072fedf556a3093114))
+* **shared:** add clearAuthDir helper ([725785b](https://github.com/AgentSoft-Agency/AgentChat/commit/725785b824a4aab361bb779267ab5c2b14798cc4))
+
+
+### Bug Fixes
+
+* **bridge:** serialize relink/logout to prevent concurrent reconnect race ([905d13f](https://github.com/AgentSoft-Agency/AgentChat/commit/905d13fee527f32f7370651200e49aae63b1154c))
+
 ## 0.1.0 (2026-06-10)
 
 
